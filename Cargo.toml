@@ -1,5 +1,5 @@
 [workspace]
-members = []
+members = [ "ferris-backend", "ferris-frontend" ]
 resolver = "2"
 
 [workspace.dependencies]
