@@ -9,6 +9,16 @@ pub struct HomePage {
     pub boards: Vec<BoardInfo>,
 }
 
+impl HomePage {
+    pub fn new(title: String, logo: String, boards: Vec<BoardInfo>) -> Self {
+        Self {
+            title,
+            logo,
+            boards,
+        }
+    }
+}
+
 impl Default for HomePage {
     fn default() -> Self {
         HomePage {

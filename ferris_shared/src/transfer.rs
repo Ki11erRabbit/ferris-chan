@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::transfer::home::HomePage;
 
 pub mod home;
 pub mod admin;
@@ -10,6 +11,16 @@ pub struct RootGetResponse {
     title: String,
     logo: String,
     boards: Vec<BoardInfo>
+}
+
+impl RootGetResponse {
+    pub fn new(title: String, logo: String, boards: Vec<BoardInfo>) -> Self {
+        Self {
+            title,
+            logo,
+            boards,
+        }
+    }
 }
 
 impl Default for RootGetResponse {

@@ -1,4 +1,6 @@
 port = 3000
+name = "Ferris-chan"
+logo = ""
 boards = [{ name = "Technology", category = "Interests" }]
 workers = 1
 prevent_anonymous_posts = false

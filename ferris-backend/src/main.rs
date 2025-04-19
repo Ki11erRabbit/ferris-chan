@@ -50,7 +50,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
-            .app_data(Data::new(AppState::new(config, pool.clone())))
+            .app_data(Data::new(AppState::new(config.clone(), pool.clone())))
             .service(endpoints::get_home)
             .service(endpoints::user::register_user)
             .service(endpoints::user::login_user)
