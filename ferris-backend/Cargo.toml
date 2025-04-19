@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+actix-cors = "0.7.1"
 actix-web = "4.10.2"
 argon2 = "0.5.3"
 env_logger = "0.11.8"
@@ -13,3 +14,4 @@ sqlx = { version = "0.8", features = [ "runtime-tokio", "sqlite" ] }
 toml = "0.8.20"
 uuid = { version = "1.16.0", features = ["v1", "v4"]}
 log = "0.4.27"
+http = "0.2.12"

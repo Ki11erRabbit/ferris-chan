@@ -1,7 +1,7 @@
 [package]
 name = "ferris-frontend"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["ki11errabbit <ki11errabbit@posteo.net>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,6 +13,9 @@ leptos_router = { version = "0.7" }
 console_log = "1"
 log = "0.4"
 console_error_panic_hook = "0.1"
+send_wrapper = "0.6.0"
+gloo-net = "0.6.0"
+ferris_shared = { workspace = true }
 
 # utils
 # strum = { version = "0.25", features = ["derive", "strum_macros"] }

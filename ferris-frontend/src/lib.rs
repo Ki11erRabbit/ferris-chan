@@ -5,6 +5,8 @@ use leptos_router::{components::*, path};
 // Modules
 mod components;
 mod pages;
+pub mod api;
+
 
 // Top-Level pages
 use crate::pages::home::Home;

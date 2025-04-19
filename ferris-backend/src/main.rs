@@ -5,6 +5,7 @@ mod database;
 
 use std::fs::OpenOptions;
 use std::io::Read;
+use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
 use actix_web::web::Data;
 use sqlx::sqlite::SqliteConnectOptions;
@@ -48,7 +49,19 @@ async fn main() -> std::io::Result<()> {
     let workers = config.workers;
     let config: RuntimeConfig = config.into();
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://127.0.0.1:3001")
+            .allowed_origin_fn(|origin, _req_head| {
+                log::info!("\ncors bytes: {:?}\n", origin);
+                origin.as_bytes().ends_with(b"127.0.0.1:3001")
+            })
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            .allowed_header(http::header::CONTENT_TYPE)
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .wrap(middleware::Logger::default())
             .app_data(Data::new(AppState::new(config.clone(), pool.clone())))
             .service(endpoints::get_home)

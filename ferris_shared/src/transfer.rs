@@ -8,9 +8,9 @@ pub mod user;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct RootGetResponse {
-    title: String,
-    logo: String,
-    boards: Vec<BoardInfo>
+    pub title: String,
+    pub logo: String,
+    pub boards: Vec<BoardInfo>
 }
 
 impl RootGetResponse {
