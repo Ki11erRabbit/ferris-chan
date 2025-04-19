@@ -1,4 +1,8 @@
-use actix_web::{web, App, HttpRequest, HttpServer};
+mod endpoints;
+mod transfer;
+mod constants;
+
+use actix_web::{App, HttpRequest, HttpServer};
 
 async fn index(req: HttpRequest) -> &'static str {
     println!("REQ: {:?}", req);
@@ -13,8 +17,12 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            .service(web::resource("/index.html").to(|| async { "Hello World!"}))
-            .service(web::resource("/").to(index))
+            .service(endpoints::get_home)
+            .service(endpoints::admin::login_admin)
+            .service(endpoints::admin::logout_admin)
+            .service(endpoints::admin::admin_remove_post)
+            .service(endpoints::post::get_posts)
+            .service(endpoints::post::get_post_replies)
     })
         .bind(("127.0.0.1", 3000))?
         .run()
