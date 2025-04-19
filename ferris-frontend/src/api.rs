@@ -32,7 +32,7 @@ where
 }
 pub fn get_request_body<R, T>(path: &str, request: R) -> impl std::future::Future<Output = Option<T>>
 where
-    R: DeserializeOwned + Into<JsValue> + Send,
+    R: Serialize,
     T: Serialize + DeserializeOwned {
     SendWrapper::new(async move {
         let abort_controller = SendWrapper::new(AbortController::new().ok());
@@ -46,7 +46,7 @@ where
 
         gloo_net::http::Request::get(path)
             .abort_signal(abort_signal.as_ref())
-            .body(request)
+            .json(&request)
             .map_err(|e| logging::error!("{e}"))
             .ok()?
             .send()

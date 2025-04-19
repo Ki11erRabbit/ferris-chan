@@ -10,14 +10,16 @@ pub mod user;
 pub struct RootGetResponse {
     pub title: String,
     pub logo: String,
+    pub categories: Vec<String>,
     pub boards: Vec<BoardInfo>
 }
 
 impl RootGetResponse {
-    pub fn new(title: String, logo: String, boards: Vec<BoardInfo>) -> Self {
+    pub fn new(title: String, logo: String, categories: Vec<String>, boards: Vec<BoardInfo>) -> Self {
         Self {
             title,
             logo,
+            categories,
             boards,
         }
     }
@@ -28,6 +30,7 @@ impl Default for RootGetResponse {
         RootGetResponse {
             title: String::from("Ferris-chan"),
             logo: String::new(),
+            categories: vec![String::from("Interests")],
             boards: vec![
                 BoardInfo {
                     name: String::from("Technology"),

@@ -7,6 +7,7 @@ use ferris_shared::transfer::BoardInfo;
 pub struct ServerConfig {
     pub port: u16,
     pub boards: Vec<BoardInfo>,
+    pub categories: Vec<String>,
     pub workers: usize,
     pub name: String,
     pub logo: String,
@@ -20,6 +21,7 @@ pub struct RuntimeConfig {
     pub block_registrations: bool,
     pub name: String,
     pub logo: String,
+    pub categories: Vec<String>,
     pub boards: Vec<BoardInfo>,
 }
 
@@ -30,6 +32,7 @@ impl From<ServerConfig> for RuntimeConfig {
             block_registrations: config.block_registrations,
             name: config.name,
             logo: config.logo,
+            categories: config.categories,
             boards: config.boards,
         }
     }

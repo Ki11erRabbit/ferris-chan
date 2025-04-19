@@ -50,3 +50,18 @@ button {
   text-align: center;
   margin: 2rem;
 }
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.board-category {
+  justify-content: center;
+}
+
+.board-category ul {
+  list-style: none;
+}

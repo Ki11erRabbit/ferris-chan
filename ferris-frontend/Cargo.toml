@@ -14,7 +14,7 @@ console_log = "1"
 log = "0.4"
 console_error_panic_hook = "0.1"
 send_wrapper = "0.6.0"
-gloo-net = "0.6.0"
+gloo-net = { version = "0.6.0", features = ["http", "json"] }
 ferris_shared = { workspace = true }
 
 # utils

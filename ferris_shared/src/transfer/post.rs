@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct GetPostsRequest {
     pub board: String,
     pub category: String,
@@ -8,9 +8,20 @@ pub struct GetPostsRequest {
     pub count: usize,
 }
 
-#[derive(Deserialize, Serialize)]
+impl GetPostsRequest {
+    pub fn new(board: String, category: String, count: usize, offset: usize) -> Self {
+        Self {
+            board,
+            category,
+            count,
+            offset,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone)]
 pub struct GetPostsResponse {
-    posts: Vec<Post>,
+    pub posts: Vec<Post>,
 }
 
 impl GetPostsResponse {
@@ -90,7 +101,7 @@ impl CreatePostResponse {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct CreatePostReplyRequest {
     pub board: String,
     pub category: String,
@@ -106,7 +117,7 @@ pub struct CreatePostReplyResponse {
     post: Post,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, Eq, Hash)]
 pub struct Post {
     pub username: String,
     pub image: String,
