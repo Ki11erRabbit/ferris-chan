@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use sqlx::{Database, Executor, Pool};
-use crate::transfer::BoardInfo;
+use ferris_shared::transfer::BoardInfo;
 
 #[derive(Deserialize, Clone)]
 pub struct ServerConfig {

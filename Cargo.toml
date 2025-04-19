@@ -1,5 +1,6 @@
 [workspace]
-members = [ "ferris-backend", "ferris-frontend" ]
+members = [ "ferris-backend", "ferris-frontend" , "ferris_shared"]
 resolver = "2"
 
 [workspace.dependencies]
+ferris_shared = { path = "ferris_shared"}

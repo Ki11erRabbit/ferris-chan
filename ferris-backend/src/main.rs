@@ -1,5 +1,4 @@
 mod endpoints;
-mod transfer;
 mod constants;
 mod config;
 mod database;
@@ -66,8 +65,6 @@ async fn main() -> std::io::Result<()> {
         .workers(workers)
         .run()
         .await?;
-
-    pool.close().await;
 
     Ok(())
 }

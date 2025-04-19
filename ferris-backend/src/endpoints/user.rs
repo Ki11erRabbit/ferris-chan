@@ -3,7 +3,7 @@ use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use sqlx::{SqlitePool};
 use crate::AppState;
-use crate::transfer::user::{LoginRequest, LoginResponse, LogoutRequest, RegisterRequest};
+use ferris_shared::transfer::user::{LoginRequest, LoginResponse, LogoutRequest, RegisterRequest};
 
 #[put("/auth")]
 async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {

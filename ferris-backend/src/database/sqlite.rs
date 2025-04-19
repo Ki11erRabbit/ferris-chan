@@ -2,8 +2,8 @@ use sqlx::{Row, SqliteConnection, SqlitePool};
 use uuid::{Timestamp, Uuid, timestamp::context::Context};
 use crate::config::ServerConfig;
 use crate::constants;
-use crate::transfer::BoardInfo;
-use crate::transfer::post::Post;
+use ferris_shared::transfer::BoardInfo;
+use ferris_shared::transfer::post::Post;
 
 pub async fn initialize_database(config: &ServerConfig, pool: &mut SqlitePool) -> sqlx::Result<()> {
     let mut connection = pool.begin().await?;

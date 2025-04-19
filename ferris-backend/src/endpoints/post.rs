@@ -3,7 +3,7 @@ use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use web::Json;
 use crate::AppState;
-use crate::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, GetPostReplyRequest, GetPostReplyResponse, GetPostsRequest, GetPostsResponse};
+use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, GetPostReplyRequest, GetPostReplyResponse, GetPostsRequest, GetPostsResponse};
 
 #[get("/post")]
 async fn get_posts(req: Json<GetPostsRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
