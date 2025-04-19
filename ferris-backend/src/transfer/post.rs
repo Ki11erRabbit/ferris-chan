@@ -39,24 +39,30 @@ impl Default for GetPostsResponse {
 pub struct GetPostReplyRequest {
     pub parent: usize,
     pub count: usize,
+    pub offset: usize,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct GetPostReplyResponse {
-    posts: Vec<PostReply>,
+    posts: Vec<Post>,
+}
+
+impl GetPostReplyResponse {
+    pub fn new(posts: Vec<Post>) -> Self {
+        Self { posts }
+    }
 }
 
 impl Default for GetPostReplyResponse {
     fn default() -> Self {
         Self {
             posts: vec![
-                PostReply {
+                Post {
                     username: String::from("Anonymous"),
                     image: String::new(),
                     text: String::from("idiot"),
                     unix_timestamp: 0,
-                    message_number: 1,
-                    parent_reply: 0,
+                    post_number: 1,
                 }
             ]
         }
@@ -70,14 +76,4 @@ pub struct Post {
     pub text: String,
     pub unix_timestamp: usize,
     pub post_number: usize,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct PostReply {
-    pub username: String,
-    pub image: String,
-    pub text: String,
-    pub unix_timestamp: usize,
-    pub message_number: usize,
-    pub parent_reply: usize,
 }

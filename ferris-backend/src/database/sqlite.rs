@@ -13,7 +13,7 @@ pub async fn initialize_database(config: &ServerConfig, pool: &mut SqlitePool) -
         "CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, email TEXT)",
         "CREATE TABLE IF NOT EXISTS AuthToken (id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT, timestamp BIG INT, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES User(id))",
         "CREATE TABLE IF NOT EXISTS Admin (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES User(id))",
-        "CREATE TABLE IF NOT EXISTS Post (id INTEGER UNIQUE, board_id INTEGER, category_id INTEGER, image TEXT, text TEXT, user_id INTEGER, timestamp BIG INT, parent INTEGER, FOREIGN KEY (user_id) REFERENCES User(id), FOREIGN KEY (board_id) REFERENCES Board(id), FOREIGN KEY (category_id) REFERENCES Category(id), FOREIGN KEY(parent) REFERENCES Post(id), PRIMARY KEY (id, board_id, category_id))",
+        "CREATE TABLE IF NOT EXISTS Post (id INTEGER, board_id INTEGER, category_id INTEGER, image TEXT, text TEXT, user_id INTEGER, timestamp BIG INT, parent INTEGER, FOREIGN KEY (user_id) REFERENCES User(id), FOREIGN KEY (board_id) REFERENCES Board(id), FOREIGN KEY (category_id) REFERENCES Category(id), FOREIGN KEY(parent) REFERENCES Post(id), PRIMARY KEY (id))",
     ];
 
     for stmt in statements {
@@ -119,6 +119,35 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
     let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 ORDER BY Post.id DESC LIMIT $4 OFFSET $3")
         .bind(board)
         .bind(category)
+        .bind(offset)
+        .bind(count)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    log::info!("got data");
+
+    for row in result {
+        output.push(Post {
+            username: row.get("username"),
+            image: row.get("image"),
+            text: row.get("text"),
+            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            post_number: row.get::<i64, _>("post_number") as usize,
+        })
+    }
+
+    connection.commit().await?;
+    Ok(output)
+}
+
+pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset: i64) -> sqlx::Result<Vec<Post>> {
+    let mut connection = pool.begin().await?;
+    let mut output = Vec::new();
+
+    log::info!("getting posts");
+
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where parent = $1 ORDER BY Post.id DESC LIMIT $3 OFFSET $2")
+        .bind(parent)
         .bind(offset)
         .bind(count)
         .fetch_all(&mut *connection)

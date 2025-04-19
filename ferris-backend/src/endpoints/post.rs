@@ -20,13 +20,15 @@ async fn get_posts(req: Json<GetPostsRequest>, data: web::Data<AppState>) -> std
 }
 
 #[get("/post/reply")]
-async fn get_post_replies(_: Json<GetPostReplyRequest>) -> std::io::Result<HttpResponse> {
+async fn get_post_replies(req: Json<GetPostReplyRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
+    let GetPostReplyRequest { parent, count, offset } = req.into_inner();
 
-    // TODO! look into database and pull n replies from the database starting offset from the start
     // Eventually make it so that it only pulls recent active posts replies
+    let result = crate::database::get_post_replies(&data.get_ref().db, parent as i64, count as i64, offset as i64).await
+        .expect("unable to get posts");
 
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type(ContentType::json())
-        .json(GetPostReplyResponse::default())
+        .json(GetPostReplyResponse::new(result))
     )
 }
