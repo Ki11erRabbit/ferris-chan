@@ -6,13 +6,26 @@ mod database;
 
 use std::fs::OpenOptions;
 use std::io::Read;
-use actix_web::{App, HttpRequest, HttpServer};
+use actix_web::{middleware, App, HttpServer};
+use actix_web::web::Data;
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{AnyPool, SqlitePool};
+use sqlx::SqlitePool;
 use crate::config::ServerConfig;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub config: ServerConfig,
+    pub db: SqlitePool,
+}
+impl AppState {
+    pub fn new(config: ServerConfig, db: SqlitePool) -> Self {
+        Self { config, db }
+    }
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
     let mut config = OpenOptions::new()
         .read(true)
@@ -21,9 +34,9 @@ async fn main() -> std::io::Result<()> {
     let mut buf = String::new();
     config.read_to_string(&mut buf)?;
 
-    println!("{}", buf);
 
     let config: ServerConfig = toml::from_str(buf.as_str()).expect("Failed to parse config.toml");
+    let port = config.port;
 
     let options = SqliteConnectOptions::new()
         .filename("database.sqlite")
@@ -34,11 +47,10 @@ async fn main() -> std::io::Result<()> {
     database::initialize_database(&config, &mut pool).await
         .expect("Failed to initialize database");
 
-    pool.close().await;
-
     HttpServer::new(move || {
         App::new()
-            .app_data(pool.clone())
+            .wrap(middleware::Logger::default())
+            .app_data(Data::new(AppState::new(config.clone(), pool.clone())))
             .service(endpoints::get_home)
             .service(endpoints::user::login_user)
             .service(endpoints::user::logout_user)
@@ -46,7 +58,7 @@ async fn main() -> std::io::Result<()> {
             .service(endpoints::post::get_posts)
             .service(endpoints::post::get_post_replies)
     })
-        .bind(("127.0.0.1", config.port))?
+        .bind(("127.0.0.1", port))?
         .run()
         .await?;
 

@@ -4,13 +4,19 @@ use serde::{Deserialize, Serialize};
 pub struct GetPostsRequest {
     pub board: String,
     pub category: String,
-    pub start: usize,
+    pub offset: usize,
     pub count: usize,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct GetPostsResponse {
     posts: Vec<Post>,
+}
+
+impl GetPostsResponse {
+    pub fn new(posts: Vec<Post>) -> Self {
+        Self { posts }
+    }
 }
 
 impl Default for GetPostsResponse {
