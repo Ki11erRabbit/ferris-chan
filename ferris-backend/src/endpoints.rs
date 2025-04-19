@@ -1,5 +1,6 @@
 pub mod admin;
 pub(crate) mod post;
+pub(crate) mod user;
 
 use actix_web::{get, HttpRequest, HttpResponse};
 use actix_web::http::header::ContentType;

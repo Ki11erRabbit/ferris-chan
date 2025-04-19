@@ -1,8 +1,9 @@
-use actix_web::cookie::time::format_description::modifier::UnixTimestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct GetPostsRequest {
+    pub board: String,
+    pub category: String,
     pub start: usize,
     pub count: usize,
 }
