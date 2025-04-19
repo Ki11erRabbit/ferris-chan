@@ -1,4 +1,5 @@
 port = 3000
 boards = [{ name = "Technology", category = "Interests" }]
+workers = 1
 prevent_anonymous_posts = false
 block_registrations = false

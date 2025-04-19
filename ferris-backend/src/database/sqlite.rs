@@ -1,6 +1,7 @@
 use sqlx::{Row, SqliteConnection, SqlitePool};
 use uuid::{Timestamp, Uuid, timestamp::context::Context};
 use crate::config::ServerConfig;
+use crate::constants;
 use crate::transfer::BoardInfo;
 use crate::transfer::post::Post;
 
@@ -67,14 +68,54 @@ async fn add_board<'a>(connection: &mut SqliteConnection, board: &BoardInfo) -> 
     Ok(())
 }
 
-pub async fn login_user(pool: &SqlitePool, email: &str, password: &str) -> sqlx::Result<String> {
+pub async fn register_user(pool: &SqlitePool, username: &str, email: &str, password: &str) -> sqlx::Result<String> {
     let mut connection = pool.begin().await?;
 
-    // TODO: HASH THE PASSWORD!!!!
+    let password = constants::hash_password(password);
+
+    sqlx::query("INSERT INTO User (username, password, email) VALUES ($1, $2, $3)")
+        .bind(username)
+        .bind(&password)
+        .bind(email)
+        .execute(&mut *connection)
+        .await?;
+
 
     let id = sqlx::query("SELECT id FROM User WHERE email = $1 AND password = $2")
         .bind(email)
-        .bind(password)
+        .bind(&password)
+        .fetch_one(&mut *connection)
+        .await?;
+
+    let id = id.get::<i64, &str>("id");
+
+    let token = Uuid::new_v4();
+    let token = token.to_string();
+
+    let timestamp = Timestamp::now(Context::new_random());
+    let (timestamp, _) = timestamp.to_unix();
+
+    sqlx::query("INSERT INTO AuthToken (token, user_id, timestamp) VALUES ($1, $2, $3)")
+        .bind(&token)
+        .bind(id)
+        .bind(timestamp as i64)
+        .execute(&mut *connection)
+        .await?;
+
+    connection.commit().await?;
+
+    Ok(token)
+}
+
+
+pub async fn login_user(pool: &SqlitePool, email: &str, password: &str) -> sqlx::Result<String> {
+    let mut connection = pool.begin().await?;
+
+    let password = constants::hash_password(password);
+
+    let id = sqlx::query("SELECT id FROM User WHERE email = $1 AND password = $2")
+        .bind(email)
+        .bind(&password)
         .fetch_one(&mut *connection)
         .await?;
 

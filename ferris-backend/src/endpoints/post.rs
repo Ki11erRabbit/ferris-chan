@@ -37,6 +37,10 @@ async fn get_post_replies(req: Json<GetPostReplyRequest>, data: web::Data<AppSta
 async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let CreatePostRequest { board, category, image, text, auth_token} = req.into_inner();
 
+    if auth_token.is_none() && data.get_ref().config.prevent_anonymous_posts {
+        return Ok(HttpResponse::new(StatusCode::SERVICE_UNAVAILABLE))
+    }
+
     let result = crate::database::create_post(&data.get_ref().db, &board, &category, &image, &text, auth_token)
         .await
     .expect("unable to create post");
@@ -49,6 +53,10 @@ async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) ->
 #[post("/post/reply")]
 async fn create_post_reply(req: Json<CreatePostReplyRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let CreatePostReplyRequest { board, category, image, text, auth_token, parent } = req.into_inner();
+
+    if auth_token.is_none() && data.get_ref().config.prevent_anonymous_posts {
+        return Ok(HttpResponse::new(StatusCode::SERVICE_UNAVAILABLE))
+    }
 
     let result = crate::database::create_post_reply(&data.get_ref().db, &board, &category, &image, &text, parent, auth_token)
         .await
