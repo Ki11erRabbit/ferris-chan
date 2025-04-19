@@ -57,6 +57,8 @@ async fn main() -> std::io::Result<()> {
             .service(endpoints::admin::admin_remove_post)
             .service(endpoints::post::get_posts)
             .service(endpoints::post::get_post_replies)
+            .service(endpoints::post::create_post)
+            .service(endpoints::post::create_post_reply)
     })
         .bind(("127.0.0.1", port))?
         .run()

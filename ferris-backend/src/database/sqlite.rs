@@ -13,7 +13,7 @@ pub async fn initialize_database(config: &ServerConfig, pool: &mut SqlitePool) -
         "CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, email TEXT)",
         "CREATE TABLE IF NOT EXISTS AuthToken (id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT, timestamp BIG INT, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES User(id))",
         "CREATE TABLE IF NOT EXISTS Admin (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES User(id))",
-        "CREATE TABLE IF NOT EXISTS Post (id INTEGER, board_id INTEGER, category_id INTEGER, image TEXT, text TEXT, user_id INTEGER, timestamp BIG INT, parent INTEGER, FOREIGN KEY (user_id) REFERENCES User(id), FOREIGN KEY (board_id) REFERENCES Board(id), FOREIGN KEY (category_id) REFERENCES Category(id), FOREIGN KEY(parent) REFERENCES Post(id), PRIMARY KEY (id))",
+        "CREATE TABLE IF NOT EXISTS Post (id INTEGER PRIMARY KEY AUTOINCREMENT, board_id INTEGER, category_id INTEGER, image TEXT, text TEXT, user_id INTEGER, timestamp BIG INT, parent INTEGER, FOREIGN KEY (user_id) REFERENCES User(id), FOREIGN KEY (board_id) REFERENCES Board(id), FOREIGN KEY (category_id) REFERENCES Category(id), FOREIGN KEY(parent) REFERENCES Post(id))",
     ];
 
     for stmt in statements {
@@ -114,7 +114,6 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
     let mut connection = pool.begin().await?;
     let mut output = Vec::new();
 
-    log::info!("getting posts");
 
     let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 ORDER BY Post.id DESC LIMIT $4 OFFSET $3")
         .bind(board)
@@ -124,7 +123,6 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
         .fetch_all(&mut *connection)
         .await?;
 
-    log::info!("got data");
 
     for row in result {
         output.push(Post {
@@ -144,7 +142,6 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
     let mut connection = pool.begin().await?;
     let mut output = Vec::new();
 
-    log::info!("getting posts");
 
     let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where parent = $1 ORDER BY Post.id DESC LIMIT $3 OFFSET $2")
         .bind(parent)
@@ -153,7 +150,6 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
         .fetch_all(&mut *connection)
         .await?;
 
-    log::info!("got data");
 
     for row in result {
         output.push(Post {
@@ -167,4 +163,143 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
 
     connection.commit().await?;
     Ok(output)
+}
+
+pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: &str, text: &str, auth_token: Option<String>) -> sqlx::Result<Post> {
+    let mut connection = pool.begin().await?;
+
+    let board_id = sqlx::query("SELECT id FROM Board WHERE name = $1")
+        .bind(board)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    let board_id: i64 = board_id[0].get("id");
+
+    let category_id = sqlx::query("SELECT id FROM Category WHERE name = $1")
+        .bind(category)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    let category_id: i64 = category_id[0].get("id");
+
+    let user_id: i64 = match auth_token {
+        Some(token) => {
+            let result = sqlx::query("SELECT user_id FROM AuthToken WHERE token = $1")
+                .bind(token.as_str())
+                .fetch_optional(&mut *connection)
+                .await?;
+            result.map(|x| x.try_get("user_id").ok())
+                .flatten()
+                .unwrap_or(1)
+        }
+        None => 1, // use Anonymous user id
+    };
+
+    let timestamp = Timestamp::now(Context::new_random());
+    let (timestamp, _) = timestamp.to_unix();
+
+    sqlx::query("INSERT INTO Post (board_id, category_id, user_id, image, text, timestamp) VALUES ($1, $2, $3, $4, $5, $6)")
+        .bind(board_id)
+        .bind(category_id)
+        .bind(user_id)
+        .bind(image)
+        .bind(text)
+        .bind(timestamp as i64)
+        .execute(&mut *connection)
+        .await?;
+
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
+        .bind(board)
+        .bind(category)
+        .bind(timestamp as i64)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    if let Some(row) = result.first() {
+        let output = Post {
+            username: row.get("username"),
+            image: row.get("image"),
+            text: row.get("text"),
+            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            post_number: row.get::<i64, _>("post_number") as usize,
+        };
+
+        connection.commit().await?;
+
+        return Ok(output);
+    }
+    connection.commit().await?;
+
+    todo!("change this to return a generic error")
+}
+
+pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, image: &str, text: &str, parent: i64, auth_token: Option<String>) -> sqlx::Result<Post> {
+    let mut connection = pool.begin().await?;
+
+    let board_id = sqlx::query("SELECT id FROM Board WHERE name = $1")
+        .bind(board)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    let board_id: i64 = board_id[0].get("id");
+
+    let category_id = sqlx::query("SELECT id FROM Category WHERE name = $1")
+        .bind(category)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    let category_id: i64 = category_id[0].get("id");
+
+    let user_id: i64 = match auth_token {
+        Some(token) => {
+            let result = sqlx::query("SELECT user_id FROM AuthToken WHERE token = $1")
+                .bind(token.as_str())
+                .fetch_optional(&mut *connection)
+                .await?;
+            result.map(|x| x.try_get("user_id").ok())
+                .flatten()
+                .unwrap_or(1)
+        }
+        None => 1, // use Anonymous user id
+    };
+
+    let timestamp = Timestamp::now(Context::new_random());
+    let (timestamp, _) = timestamp.to_unix();
+
+    sqlx::query("INSERT INTO Post (board_id, category_id, user_id, image, text, timestamp, parent) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+        .bind(board_id)
+        .bind(category_id)
+        .bind(user_id)
+        .bind(image)
+        .bind(text)
+        .bind(timestamp as i64)
+        .bind(parent)
+        .execute(&mut *connection)
+        .await?;
+
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
+        .bind(board)
+        .bind(category)
+        .bind(timestamp as i64)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    if let Some(row) = result.first() {
+        let output = Post {
+            username: row.get("username"),
+            image: row.get("image"),
+            text: row.get("text"),
+            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            post_number: row.get::<i64, _>("post_number") as usize,
+        };
+
+        connection.commit().await?;
+
+        return Ok(output);
+    }
+    connection.commit().await?;
+
+
+
+    todo!("change this to return a generic error")
 }

@@ -70,6 +70,43 @@ impl Default for GetPostReplyResponse {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct CreatePostRequest {
+    pub board: String,
+    pub category: String,
+    pub image: String,
+    pub text: String,
+    #[serde(default)]
+    pub auth_token: Option<String>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreatePostResponse {
+    post: Post,
+}
+
+impl CreatePostResponse {
+    pub fn new(post: Post) -> Self {
+        Self { post }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreatePostReplyRequest {
+    pub board: String,
+    pub category: String,
+    pub image: String,
+    pub text: String,
+    pub parent: i64,
+    #[serde(default)]
+    pub auth_token: Option<String>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreatePostReplyResponse {
+    post: Post,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct Post {
     pub username: String,
     pub image: String,
