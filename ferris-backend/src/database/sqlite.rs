@@ -1,5 +1,6 @@
+use chrono::Utc;
 use sqlx::{Row, SqliteConnection, SqlitePool};
-use uuid::{Timestamp, Uuid, timestamp::context::Context};
+use uuid::Uuid;
 use crate::config::ServerConfig;
 use crate::constants;
 use ferris_shared::transfer::BoardInfo;
@@ -92,13 +93,13 @@ pub async fn register_user(pool: &SqlitePool, username: &str, email: &str, passw
     let token = Uuid::new_v4();
     let token = token.to_string();
 
-    let timestamp = Timestamp::now(Context::new_random());
-    let (timestamp, _) = timestamp.to_unix();
+    let timestamp = Utc::now();
+    let timestamp= timestamp.timestamp();
 
     sqlx::query("INSERT INTO AuthToken (token, user_id, timestamp) VALUES ($1, $2, $3)")
         .bind(&token)
         .bind(id)
-        .bind(timestamp as i64)
+        .bind(timestamp)
         .execute(&mut *connection)
         .await?;
 
@@ -124,13 +125,13 @@ pub async fn login_user(pool: &SqlitePool, email: &str, password: &str) -> sqlx:
     let token = Uuid::new_v4();
     let token = token.to_string();
 
-    let timestamp = Timestamp::now(Context::new_random());
-    let (timestamp, _) = timestamp.to_unix();
+    let timestamp = Utc::now();
+    let timestamp = timestamp.timestamp();
 
     sqlx::query("INSERT INTO AuthToken (token, user_id, timestamp) VALUES ($1, $2, $3)")
         .bind(&token)
         .bind(id)
-        .bind(timestamp as i64)
+        .bind(timestamp)
         .execute(&mut *connection)
         .await?;
 
@@ -170,7 +171,7 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
             username: row.get("username"),
             image: row.get("image"),
             text: row.get("text"),
-            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
         })
     }
@@ -197,7 +198,7 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
             username: row.get("username"),
             image: row.get("image"),
             text: row.get("text"),
-            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
         })
     }
@@ -236,8 +237,8 @@ pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: 
         None => 1, // use Anonymous user id
     };
 
-    let timestamp = Timestamp::now(Context::new_random());
-    let (timestamp, _) = timestamp.to_unix();
+    let timestamp = Utc::now();
+    let timestamp = timestamp.timestamp();
 
     sqlx::query("INSERT INTO Post (board_id, category_id, user_id, image, text, timestamp) VALUES ($1, $2, $3, $4, $5, $6)")
         .bind(board_id)
@@ -245,14 +246,14 @@ pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: 
         .bind(user_id)
         .bind(image)
         .bind(text)
-        .bind(timestamp as i64)
+        .bind(timestamp)
         .execute(&mut *connection)
         .await?;
 
     let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
         .bind(board)
         .bind(category)
-        .bind(timestamp as i64)
+        .bind(timestamp)
         .fetch_all(&mut *connection)
         .await?;
 
@@ -261,7 +262,7 @@ pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: 
             username: row.get("username"),
             image: row.get("image"),
             text: row.get("text"),
-            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
         };
 
@@ -304,8 +305,8 @@ pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, i
         None => 1, // use Anonymous user id
     };
 
-    let timestamp = Timestamp::now(Context::new_random());
-    let (timestamp, _) = timestamp.to_unix();
+    let timestamp = Utc::now();
+    let timestamp = timestamp.timestamp();
 
     sqlx::query("INSERT INTO Post (board_id, category_id, user_id, image, text, timestamp, parent) VALUES ($1, $2, $3, $4, $5, $6, $7)")
         .bind(board_id)
@@ -313,7 +314,7 @@ pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, i
         .bind(user_id)
         .bind(image)
         .bind(text)
-        .bind(timestamp as i64)
+        .bind(timestamp)
         .bind(parent)
         .execute(&mut *connection)
         .await?;
@@ -321,7 +322,7 @@ pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, i
     let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
         .bind(board)
         .bind(category)
-        .bind(timestamp as i64)
+        .bind(timestamp)
         .fetch_all(&mut *connection)
         .await?;
 
@@ -330,7 +331,7 @@ pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, i
             username: row.get("username"),
             image: row.get("image"),
             text: row.get("text"),
-            unix_timestamp: row.get::<i64, _>("timestamp") as usize,
+            timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
         };
 

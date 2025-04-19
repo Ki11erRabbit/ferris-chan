@@ -38,7 +38,7 @@ impl Default for GetPostsResponse {
                     username: String::from("Anonymous"),
                     image: String::new(),
                     text: String::from("test"),
-                    unix_timestamp: 0,
+                    timestamp: 0,
                     post_number: 0,
                 }
             ]
@@ -72,7 +72,7 @@ impl Default for GetPostReplyResponse {
                     username: String::from("Anonymous"),
                     image: String::new(),
                     text: String::from("idiot"),
-                    unix_timestamp: 0,
+                    timestamp: 0,
                     post_number: 1,
                 }
             ]
@@ -122,6 +122,6 @@ pub struct Post {
     pub username: String,
     pub image: String,
     pub text: String,
-    pub unix_timestamp: usize,
+    pub timestamp: i64,
     pub post_number: usize,
 }

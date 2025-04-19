@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local, Utc};
 use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
@@ -31,8 +32,10 @@ pub fn Board() -> impl IntoView {
                         let(post)
                     >{
                         view! {
-                            <h4>{post.username.clone()}{post.post_number.to_string()}</h4>
+                            <div class="post">
+                            <div class="post-header"><p>{post.username.clone()}</p><span> {DateTime::<Local>::from(DateTime::<Utc>::from_timestamp(post.timestamp, 0).unwrap()).format("%x(%a)%H:%M:%S").to_string()}{format!(" No.{}", post.post_number)}</span></div>
                             <p>{post.text.clone()}</p>
+                            </div>
                         }
                     }</For>
 

@@ -16,6 +16,7 @@ console_error_panic_hook = "0.1"
 send_wrapper = "0.6.0"
 gloo-net = { version = "0.6.0", features = ["http", "json"] }
 ferris_shared = { workspace = true }
+chrono = {  version = "0.4.40", features = ["alloc"] }
 
 # utils
 # strum = { version = "0.25", features = ["derive", "strum_macros"] }
