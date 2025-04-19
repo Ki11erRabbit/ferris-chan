@@ -2,7 +2,6 @@ use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use ferris_shared::transfer::post::{GetPostsRequest, GetPostsResponse};
-use ferris_shared::transfer::RootGetResponse;
 use crate::api;
 
 #[component]
@@ -13,7 +12,7 @@ pub fn Board() -> impl IntoView {
     let board_response: Resource<Option<GetPostsResponse>> = Resource::new(
         move || (params.read().get("category").unwrap().clone(), params.read().get("board").unwrap().clone()),
         move |(category, board)| async move {
-            api::get_request_body("http://localhost:3000/post", GetPostsRequest::new(board, category, 10, 0)).await
+            api::get_request(format!("http://127.0.0.1:3000/post/{category}/{board}/{}/{}", 10, 0).as_str()).await
         }
     );
 

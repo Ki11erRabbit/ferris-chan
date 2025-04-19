@@ -5,15 +5,15 @@ use web::Json;
 use crate::AppState;
 use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, GetPostReplyRequest, GetPostReplyResponse, GetPostsRequest, GetPostsResponse};
 
-#[get("/post")]
-async fn get_posts(req: Json<GetPostsRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
-    let GetPostsRequest { board, category, offset, count } = req.into_inner();
-
+#[get("/post/{category}/{board}/{count}/{offset}")]
+async fn get_posts(path: web::Path<(String, String, i64, i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
+    let (category, board, count, offset) = path.into_inner();
     // Eventually make it so that it only pulls recent active posts
-    let result = crate::database::get_posts(&data.get_ref().db, &board, &category, count as i64, offset as i64).await
+    let result = crate::database::get_posts(&data.get_ref().db, &board, &category, count, offset).await
         .expect("unable to get posts");
 
     Ok(HttpResponse::build(StatusCode::OK)
+        .append_header(("Access-Control-Allow-Origin", "*"))
         .content_type(ContentType::json())
         .json(GetPostsResponse::new(result))
     )

@@ -56,7 +56,7 @@ async fn main() -> std::io::Result<()> {
                 origin.as_bytes().ends_with(b"127.0.0.1:3001")
             })
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT, http::header::ACCESS_CONTROL_ALLOW_ORIGIN])
             .allowed_header(http::header::CONTENT_TYPE)
             .max_age(3600);
 
