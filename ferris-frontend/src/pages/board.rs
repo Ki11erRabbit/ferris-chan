@@ -48,6 +48,12 @@ pub fn Board() -> impl IntoView {
                         view! {
                             <div class="post">
                             <div class="post-header"><p>{post.username.clone()}</p><span> {DateTime::<Local>::from(DateTime::<Utc>::from_timestamp(post.timestamp, 0).unwrap()).format("%x(%a)%H:%M:%S").to_string()}{format!(" No.{}", post.post_number)}</span></div>
+                            {if post.image.len() > 0 {
+                                Some(view! {<img src=format!("data:image/png;base64,{}", post.image.clone()) />})
+                            } else {
+                                None
+                            } }
+
                             <p>{post.text.clone()}</p>
                             </div>
                         }
