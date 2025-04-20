@@ -1,0 +1,104 @@
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
+use leptos::{component, view, IntoView};
+use leptos::logging::log;
+use leptos::prelude::{signal, Callable, Callback, Get, GetUntracked, OnAttribute, PropAttribute, ReadSignal, Set, ElementChild, OnTargetAttribute};
+use leptos::task::spawn_local;
+use leptos::web_sys::{HtmlInputElement};
+use leptos::web_sys::Blob;
+use leptos::wasm_bindgen::JsCast;
+use web_sys::js_sys::{ArrayBuffer, Uint8Array};
+use ferris_shared::transfer::post::{CreatePostRequest, Post};
+use crate::api;
+
+async fn to_base64(data: Blob) -> String {
+    let file_raw_data = wasm_bindgen_futures::JsFuture::from(data.array_buffer())
+        .await
+        .expect("File reading should not fail");
+
+    let file_raw_data = file_raw_data
+        .dyn_into::<ArrayBuffer>()
+        .expect("Expected an ArrayBuffer");
+
+    let file_raw_data = Uint8Array::new(&file_raw_data);
+    let len = file_raw_data.length() as usize;
+
+    let mut file_bytes = vec![0; len];
+    file_raw_data.copy_to(&mut file_bytes.as_mut_slice());
+
+    let output = BASE64_STANDARD.encode(file_bytes.as_slice());
+    log!("{}", output);
+    output
+}
+
+
+#[component]
+pub fn UploadFile(
+    #[prop(into)]
+    set_file: Callback<(String,)>
+) -> impl IntoView {
+
+
+    let handle_file_conversion = move |event: leptos::ev::Event| {
+        let input: HtmlInputElement = event.target().unwrap().unchecked_into();
+
+        if let Some(files) = input.files() {
+            spawn_local(async move {
+                let file = files.get(0).unwrap();
+                let blob = file.slice().expect("File reading should not fail");
+
+                let file = to_base64(blob).await;
+                set_file.run((file,))
+            });
+        }
+    };
+
+    view! {
+        <input
+            type="file"
+            on:input=handle_file_conversion
+
+        />
+    }
+}
+
+#[component]
+pub fn SendPost(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
+    #[prop(into)]
+    set_post: Callback<(bool,)>
+) -> impl IntoView {
+
+    let (get_file, set_file) = signal(String::new());
+    let set_file_callback: Callback<(String,)> = Callback::from(move |file| {set_file.set(file)});
+
+    let (get_text, set_text) = signal(String::new());
+
+    view! {
+        <UploadFile set_file=set_file_callback />
+        <textarea
+            prop:value=move || get_text.get()
+            on:input:target=move |ev| set_text.set(ev.target().value())
+        >{move || get_text.get_untracked()}</textarea>
+        <button on:click=move |_| {
+            spawn_local(async move {
+                let result: Option<Post> = api::post_request_body("http://127.0.0.1:3000/post", CreatePostRequest::new(
+                    get_board.get(),
+                    get_category.get(),
+                    get_file.get(),
+                    get_text.get(),
+                    None
+                ))
+                .await;
+
+                if result.is_some() {
+                    log!("{:?}", result);
+                    set_post.run((true,));
+                }
+            })
+        }>
+            "Post"
+        </button>
+    }
+}

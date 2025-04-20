@@ -2,11 +2,15 @@ use chrono::{DateTime, Local, Utc};
 use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
-use ferris_shared::transfer::post::{GetPostsRequest, GetPostsResponse};
+use ferris_shared::transfer::post::{GetPostsRequest, GetPostsResponse, Post};
 use crate::api;
+use crate::components::send_post::{SendPost, UploadFile};
 
 #[component]
 pub fn Board() -> impl IntoView {
+
+    let (get_post, set_post) = signal(false);
+    let set_post_callback: Callback<(bool,)> = Callback::from(move |post: bool| { set_post.set(post)});
 
     let params = use_params_map();
 
@@ -17,12 +21,22 @@ pub fn Board() -> impl IntoView {
         }
     );
 
+    let (get_board, set_board) = signal(String::new());
+    set_board.set(params.read().get("board").unwrap().clone());
+    let (get_category, set_category) = signal(String::new());
+    set_category.set(params.read().get("category").unwrap().clone());
+
+
+    let (get_file, set_file) = signal(String::new());
+    let set_file_callback: Callback<(String,)> = Callback::from(move |file| {set_file.set(file)});
+
     view! {
         <Suspense fallback=|| view! { "Loading..." }>
             {move || Suspend::new(async move { match board_response.await {
                 None => Either::Left(view! { <h1>"Source site not found"</h1> }),
                 Some(GetPostsResponse { posts }) => Either::Right(view! {
                     <h1>{params.read().get("board").unwrap().clone()}</h1>
+                    <SendPost get_board=get_board get_category=get_category set_post=set_post_callback />
                     <For
                         each=move|| {
                             let posts = posts.clone();

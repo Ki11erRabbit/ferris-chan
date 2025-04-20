@@ -1,3 +1,6 @@
+use std::char::DecodeUtf16;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use chrono::Utc;
 use sqlx::{Row, SqliteConnection, SqlitePool};
 use uuid::Uuid;
@@ -205,6 +208,22 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
 
     connection.commit().await?;
     Ok(output)
+}
+
+pub async fn get_post_image(pool: &SqlitePool, post_id: i64) -> sqlx::Result<Vec<u8>> {
+    let mut connection = pool.begin().await?;
+
+    let base64_img = sqlx::query("SELECT id FROM Post WHERE id = $1")
+        .bind(post_id)
+        .fetch_all(&mut *connection)
+        .await?;
+
+    let string: String = base64_img[0].get("image");
+    let bytes = BASE64_STANDARD.decode(string.as_bytes()).expect("Base64 Decode error");
+
+    connection.commit().await?;
+
+    Ok(bytes)
 }
 
 pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: &str, text: &str, auth_token: Option<String>) -> sqlx::Result<Post> {

@@ -80,7 +80,7 @@ impl Default for GetPostReplyResponse {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreatePostRequest {
     pub board: String,
     pub category: String,
@@ -88,6 +88,18 @@ pub struct CreatePostRequest {
     pub text: String,
     #[serde(default)]
     pub auth_token: Option<String>,
+}
+
+impl CreatePostRequest {
+    pub fn new(board: String, category: String, image: String, text: String, auth_token: Option<String>) -> Self {
+        Self {
+            board,
+            category,
+            image,
+            text,
+            auth_token,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -101,7 +113,7 @@ impl CreatePostResponse {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct CreatePostReplyRequest {
     pub board: String,
     pub category: String,
@@ -117,11 +129,23 @@ pub struct CreatePostReplyResponse {
     post: Post,
 }
 
-#[derive(Deserialize, Serialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Post {
     pub username: String,
     pub image: String,
     pub text: String,
     pub timestamp: i64,
     pub post_number: usize,
+}
+
+impl Default for Post {
+    fn default() -> Self {
+        Post {
+            username: String::new(),
+            image: String::new(),
+            text: String::new(),
+            timestamp: 0,
+            post_number: 0,
+        }
+    }
 }

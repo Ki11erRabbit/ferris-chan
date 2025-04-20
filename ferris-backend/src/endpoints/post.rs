@@ -19,12 +19,12 @@ async fn get_posts(path: web::Path<(String, String, i64, i64)>, data: web::Data<
     )
 }
 
-#[get("/post/reply")]
-async fn get_post_replies(req: Json<GetPostReplyRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
-    let GetPostReplyRequest { parent, count, offset } = req.into_inner();
+#[get("/post/reply/{parent}/{count}/{offset}")]
+async fn get_post_replies(path: web::Path<(i64, i64, i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
+    let (parent, count, offset) = path.into_inner();
 
     // Eventually make it so that it only pulls recent active posts replies
-    let result = crate::database::get_post_replies(&data.get_ref().db, parent as i64, count as i64, offset as i64).await
+    let result = crate::database::get_post_replies(&data.get_ref().db, parent, count, offset).await
         .expect("unable to get posts");
 
     Ok(HttpResponse::build(StatusCode::OK)
@@ -33,9 +33,25 @@ async fn get_post_replies(req: Json<GetPostReplyRequest>, data: web::Data<AppSta
     )
 }
 
+#[get("/post/{post_id}")]
+async fn get_post_image(path: web::Path<(i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
+    let (post_id) = path.into_inner();
+
+    let result = crate::database::get_post_image(&data.get_ref().db, post_id).await
+        .expect("unable to get posts");
+
+    Ok(HttpResponse::build(StatusCode::OK)
+        .append_header(("Access-Control-Allow-Origin", "*"))
+        .content_type(ContentType::png())
+        .body(result)
+    )
+}
+
 #[post("/post")]
 async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
+    log::debug!("Create post request : {:?}", &req);
     let CreatePostRequest { board, category, image, text, auth_token} = req.into_inner();
+
 
     if auth_token.is_none() && data.get_ref().config.prevent_anonymous_posts {
         return Ok(HttpResponse::new(StatusCode::SERVICE_UNAVAILABLE))

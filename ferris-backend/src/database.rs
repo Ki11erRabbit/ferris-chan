@@ -6,5 +6,6 @@ pub use sqlite::login_user;
 pub use sqlite::logout_user;
 pub use sqlite::get_posts;
 pub use sqlite::get_post_replies;
+pub use sqlite::get_post_image;
 pub use sqlite::create_post;
 pub use sqlite::create_post_reply;

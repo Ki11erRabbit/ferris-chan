@@ -50,15 +50,10 @@ async fn main() -> std::io::Result<()> {
     let config: RuntimeConfig = config.into();
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://127.0.0.1:3001")
-            .allowed_origin_fn(|origin, _req_head| {
-                log::info!("\ncors bytes: {:?}\n", origin);
-                origin.as_bytes().ends_with(b"127.0.0.1:3001")
-            })
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT, http::header::ACCESS_CONTROL_ALLOW_ORIGIN])
-            .allowed_header(http::header::CONTENT_TYPE)
-            .max_age(3600);
+            .allow_any_origin()
+            .allow_any_header()
+            .allow_any_method()
+            .send_wildcard();
 
         App::new()
             .wrap(cors)
@@ -71,6 +66,7 @@ async fn main() -> std::io::Result<()> {
             .service(endpoints::admin::admin_remove_post)
             .service(endpoints::post::get_posts)
             .service(endpoints::post::get_post_replies)
+            .service(endpoints::post::get_post_image)
             .service(endpoints::post::create_post)
             .service(endpoints::post::create_post_reply)
     })
