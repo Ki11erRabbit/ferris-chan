@@ -4,6 +4,7 @@ use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use ferris_shared::transfer::post::{GetPostsRequest, GetPostsResponse, Post};
 use crate::api;
+use crate::components::post::{Post, PostList};
 use crate::components::send_post::{SendPost, UploadFile};
 
 #[component]
@@ -43,27 +44,7 @@ pub fn Board() -> impl IntoView {
                 Some(_) => Either::Right(view! {
                     <h1>{params.read().get("board").unwrap().clone()}</h1>
                     <SendPost get_board=get_board get_category=get_category set_post=set_post_callback />
-                    <For
-                        each=move|| {
-                            get_posts.get()
-                        }
-                        key=|x| x.post_number
-                        let(post)
-                    >{
-                        view! {
-                            <div class="post">
-                            <div class="post-header"><p>{post.username.clone()}</p><span> {DateTime::<Local>::from(DateTime::<Utc>::from_timestamp(post.timestamp, 0).unwrap()).format("%x(%a)%H:%M:%S").to_string()}{format!(" No.{}", post.post_number)}</span></div>
-                            {if post.image.len() > 0 {
-                                Some(view! {<img src=format!("data:image/png;base64,{}", post.image.clone()) />})
-                            } else {
-                                None
-                            } }
-
-                            <p>{post.text.clone()}</p>
-                            </div>
-                        }
-                    }</For>
-
+                    <PostList get_posts=get_posts />
                 })
             }})}
         </Suspense>
