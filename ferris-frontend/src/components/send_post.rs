@@ -67,7 +67,7 @@ pub fn SendPost(
     get_board: ReadSignal<String>,
     get_category: ReadSignal<String>,
     #[prop(into)]
-    set_post: Callback<(bool,)>
+    set_post: Callback<(Post,)>
 ) -> impl IntoView {
 
     let (get_file, set_file) = signal(String::new());
@@ -84,17 +84,17 @@ pub fn SendPost(
         <button on:click=move |_| {
             spawn_local(async move {
                 let result: Option<Post> = api::post_request_body("http://127.0.0.1:3000/post", CreatePostRequest::new(
-                    get_board.get(),
-                    get_category.get(),
-                    get_file.get(),
-                    get_text.get(),
+                    get_board.get_untracked(),
+                    get_category.get_untracked(),
+                    get_file.get_untracked(),
+                    get_text.get_untracked(),
                     None
                 ))
                 .await;
 
-                if result.is_some() {
+                if let Some(result) = result {
                     log!("{:?}", result);
-                    set_post.run((true,));
+                    set_post.run((result,));
                 }
             })
         }>
