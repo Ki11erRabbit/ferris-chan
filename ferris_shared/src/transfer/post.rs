@@ -104,7 +104,7 @@ impl CreatePostRequest {
 
 #[derive(Deserialize, Serialize)]
 pub struct CreatePostResponse {
-    post: Post,
+    pub post: Post,
 }
 
 impl CreatePostResponse {

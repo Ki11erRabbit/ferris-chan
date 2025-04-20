@@ -8,7 +8,7 @@ use leptos::web_sys::{HtmlInputElement};
 use leptos::web_sys::Blob;
 use leptos::wasm_bindgen::JsCast;
 use web_sys::js_sys::{ArrayBuffer, Uint8Array};
-use ferris_shared::transfer::post::{CreatePostRequest, Post};
+use ferris_shared::transfer::post::{CreatePostRequest, CreatePostResponse, Post};
 use crate::api;
 
 async fn to_base64(data: Blob) -> String {
@@ -83,7 +83,7 @@ pub fn SendPost(
         >{move || get_text.get_untracked()}</textarea>
         <button on:click=move |_| {
             spawn_local(async move {
-                let result: Option<Post> = api::post_request_body("http://127.0.0.1:3000/post", CreatePostRequest::new(
+                let result: Option<CreatePostResponse> = api::post_request_body("http://127.0.0.1:3000/post", CreatePostRequest::new(
                     get_board.get_untracked(),
                     get_category.get_untracked(),
                     get_file.get_untracked(),
@@ -93,8 +93,7 @@ pub fn SendPost(
                 .await;
 
                 if let Some(result) = result {
-                    log!("{:?}", result);
-                    set_post.run((result,));
+                    set_post.run((result.post,));
                 }
             })
         }>

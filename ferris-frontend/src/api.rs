@@ -70,7 +70,6 @@ where
         });
 
         gloo_net::http::Request::post(path)
-            .header("Access-Control-Allow-Origin", "*")
             .abort_signal(abort_signal.as_ref())
             .json(&request)
             .map_err(|e| logging::error!("{e}"))

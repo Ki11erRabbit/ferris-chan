@@ -61,6 +61,8 @@ async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) ->
         .await
     .expect("unable to create post");
 
+    log::info!("Create post : {:?}", &result);
+
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type(ContentType::json())
         .json(CreatePostResponse::new(result)))
