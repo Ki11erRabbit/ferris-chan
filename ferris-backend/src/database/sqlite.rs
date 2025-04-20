@@ -160,7 +160,7 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
     let mut output = Vec::new();
 
 
-    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 ORDER BY Post.id DESC LIMIT $4 OFFSET $3")
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.parent IS NULL ORDER BY Post.id DESC LIMIT $4 OFFSET $3")
         .bind(board)
         .bind(category)
         .bind(offset)
