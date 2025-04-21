@@ -42,10 +42,21 @@ h6 {
   list-style: none;
 }
 
+.post-and-replies {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
 .post {
   background-color: lightcyan;
-  max-width: 50vw;
+  max-width: 60vw;
   margin: 4rem auto;
+}
+
+.post-reply {
+  max-width: 55vw;
+  margin: 5rem auto;
 }
 
 .post-content {
