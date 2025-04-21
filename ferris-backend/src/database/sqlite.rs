@@ -189,8 +189,6 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
     let mut connection = pool.begin().await?;
     let mut output = Vec::new();
 
-    log::debug!("\n{}\n", parent);
-
     let result = sqlx::query("SELECT Post.id as post_number, username, image, text, parent, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where parent = $1 ORDER BY Post.id DESC LIMIT $3 OFFSET $2")
         .bind(parent)
         .bind(offset)

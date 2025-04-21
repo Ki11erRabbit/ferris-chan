@@ -10,8 +10,7 @@ use crate::AppState;
 use crate::config::RuntimeConfig;
 
 #[get("/")]
-async fn get_home(request: HttpRequest, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
-    println!("{:?}", request);
+async fn get_home(_: HttpRequest, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let RuntimeConfig { name, logo, boards, categories, .. } = &data.get_ref().config;
 
     Ok(HttpResponse::build(StatusCode::OK)

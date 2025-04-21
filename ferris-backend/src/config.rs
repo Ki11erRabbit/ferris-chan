@@ -1,5 +1,8 @@
+use std::io::Read;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use serde::Deserialize;
-use sqlx::{Database, Executor, Pool};
+use sqlx::{Database, Executor};
 use ferris_shared::transfer::BoardInfo;
 
 /// TODO: fetch image from logo and replace the path with the BASE64 String
@@ -13,6 +16,26 @@ pub struct ServerConfig {
     pub logo: String,
     pub prevent_anonymous_posts: bool,
     pub block_registrations: bool,
+}
+
+impl ServerConfig {
+
+    /// Converts a path in logo into a base64 image
+    /// This should only ever be called once
+    pub fn get_logo(&mut self) {
+        let mut buf = Vec::new();
+        let Ok(mut file) = std::fs::File::open(&self.logo) else {
+            return;
+        };
+        let Ok(_) = file.read_to_end(&mut buf) else {
+            return;
+        };
+
+        let converted = BASE64_STANDARD.encode(&buf);
+        self.logo = converted;
+
+    }
+
 }
 
 #[derive(Clone)]

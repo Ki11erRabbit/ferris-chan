@@ -1,16 +1,14 @@
-use base64::Engine;
-use base64::prelude::BASE64_STANDARD;
 use chrono::{DateTime, Local, Utc};
 use leptos::{component, view, IntoView};
 use leptos::callback::Callback;
 use leptos::control_flow::For;
-use leptos::either::Either;
-use leptos::html::Select;
-use leptos::prelude::{signal, ClassAttribute, Get, OnAttribute, ReadSignal, Resource, Set, Suspend, Suspense, Write};
+use leptos::either::{Either, EitherOf3};
+use leptos::prelude::{signal, ClassAttribute, Get, GlobalAttributes, InnerHtmlAttribute, OnAttribute, ReadSignal, Resource, Set, Suspend, Suspense, Write};
 use leptos::prelude::ElementChild;
-use web_sys::console::count;
-use ferris_shared::transfer::post::{GetPostReplyResponse, GetPostsResponse, Post};
+use leptos_router::components::A;
+use ferris_shared::transfer::post::{GetPostReplyResponse, Post};
 use crate::api;
+use crate::components::base64_img::Base64ImgSize;
 use crate::components::send_post::SendPostReply;
 
 #[component]
@@ -43,29 +41,23 @@ pub fn PostCore(
         </div>
         <div class="post-content">
         <div class="post-image">
-        {if post_image.len() > 0 {
-            let bytes = BASE64_STANDARD.decode(post_image.as_bytes()).unwrap();
-            let size_kb = bytes.len() / 1024;
-
-            if post_image.starts_with("iVBORw0KGgo") {
-                Some(view! {<img src=format!("data:image/png;base64,{}", post_image) /> <span>{format!("{size_kb} KB PNG")}</span>})
-            } else if post_image.starts_with("/9") {
-                Some(view! {<img src=format!("data:image/jpg;base64,{}", post_image) /> <span>{format!("{size_kb} KB JPG")}</span>})
-            } else if post_image.starts_with("UklGRg") && post_image.contains("pXRUJQVlA4"){
-                Some(view! {<img src=format!("data:image/webp;base64,{}", post_image) /> <span>{format!("{size_kb} KB WEBP")}</span>})
-            } else {
-                None
-            }
-        } else {
-            None
-        } }
+        <Base64ImgSize image=post_image />
 
         </div>
         <For
             each={move|| post_text.split("\n").map(String::from).collect::<Vec<String>>()}
             key=|val| val.clone()
             let(body)
-        > <p>{body}</p> </For>
+        > <p>{
+            if body.starts_with(">>") {
+                let number = body.strip_prefix(">>").unwrap().to_string();
+                EitherOf3::A(view! { <div class="post-link"> <A href=format!("#{number}")>{body}</A></div>})
+            } else if body.starts_with(">") {
+                EitherOf3::B(view! { <div class="post-quote">{body}</div>})
+            } else {
+                EitherOf3::C(view! { {body} })
+            }
+        }</p> </For>
         </div>
         { move || {
             let parent = if parent == 0 { post_number as i64 } else { parent };
@@ -93,7 +85,7 @@ pub fn PostReply(
     set_post: Callback<(Post,)>,
 ) -> impl IntoView {
     view! {
-        <div class="post">
+        <div class="post" id=format!("{post_number}")>
             <PostCore
                 username=username
                 timestamp=timestamp
@@ -135,7 +127,8 @@ pub fn PostToplevel(
         }
     );
     view! {
-        <div class="post-and-replies">
+
+        <div class="post-and-replies" id=format!("{post_number}")>
         <div class=(["post", "post-reply"], move || true)>
         <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image get_category=get_category get_board=get_board set_post=set_post_callback parent=(post_number as i64) />
         </div>

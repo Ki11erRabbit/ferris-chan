@@ -1,11 +1,10 @@
-use chrono::{DateTime, Local, Utc};
 use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
-use ferris_shared::transfer::post::{GetPostsRequest, GetPostsResponse, Post};
+use ferris_shared::transfer::post::{GetPostsResponse, Post};
 use crate::api;
 use crate::components::post::PostList;
-use crate::components::send_post::{SendPost, UploadFile};
+use crate::components::send_post::SendPost;
 
 #[component]
 pub fn Board() -> impl IntoView {

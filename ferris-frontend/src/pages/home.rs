@@ -2,6 +2,7 @@ use leptos::either::Either;
 use leptos::prelude::*;
 use ferris_shared::transfer::{RootGetResponse, BoardInfo};
 use crate::api;
+use crate::components::base64_img::Base64Img;
 
 /// Default Home Page
 #[component]
@@ -21,6 +22,8 @@ pub fn Home() -> impl IntoView {
             {move || Suspend::new(async move { match home_page.await {
                 None => Either::Left(view! { <h1>"Source site not found"</h1> }),
                 Some(home_page) => Either::Right(view! {
+
+                    <Base64Img image=home_page.logo />
                     <h1>{home_page.title.clone()}</h1>
                     <div class="categories"><For
                         each=move|| {

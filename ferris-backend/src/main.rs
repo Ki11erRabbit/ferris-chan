@@ -35,7 +35,10 @@ async fn main() -> std::io::Result<()> {
     config.read_to_string(&mut buf)?;
 
 
-    let config: ServerConfig = toml::from_str(buf.as_str()).expect("Failed to parse config.toml");
+    let mut config: ServerConfig = toml::from_str(buf.as_str()).expect("Failed to parse config.toml");
+
+    config.get_logo();
+
     let port = config.port;
 
     let options = SqliteConnectOptions::new()
