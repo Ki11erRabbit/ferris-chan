@@ -8,7 +8,7 @@ use leptos::web_sys::{HtmlInputElement};
 use leptos::web_sys::Blob;
 use leptos::wasm_bindgen::JsCast;
 use web_sys::js_sys::{ArrayBuffer, Uint8Array};
-use ferris_shared::transfer::post::{CreatePostRequest, CreatePostResponse, Post};
+use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, Post};
 use crate::api;
 
 async fn to_base64(data: Blob) -> String {
@@ -67,7 +67,7 @@ pub fn SendPost(
     get_board: ReadSignal<String>,
     get_category: ReadSignal<String>,
     #[prop(into)]
-    set_post: Callback<(Post,)>
+    set_post: Callback<(Post,)>,
 ) -> impl IntoView {
 
     let (get_file, set_file) = signal(String::new());
@@ -88,6 +88,48 @@ pub fn SendPost(
                     get_category.get_untracked(),
                     get_file.get_untracked(),
                     get_text.get_untracked(),
+                    None
+                ))
+                .await;
+
+                if let Some(result) = result {
+                    set_post.run((result.post,));
+                }
+            })
+        }>
+            "Post"
+        </button>
+    }
+}
+
+#[component]
+pub fn SendPostReply(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
+    #[prop(into)]
+    set_post: Callback<(Post,)>,
+    parent: i64,
+) -> impl IntoView {
+
+    let (get_file, set_file) = signal(String::new());
+    let set_file_callback: Callback<(String,)> = Callback::from(move |file| {set_file.set(file)});
+
+    let (get_text, set_text) = signal(String::new());
+
+    view! {
+        <UploadFile set_file=set_file_callback />
+        <textarea
+            prop:value=move || get_text.get()
+            on:input:target=move |ev| set_text.set(ev.target().value())
+        >{move || get_text.get_untracked()}</textarea>
+        <button on:click=move |_| {
+            spawn_local(async move {
+                let result: Option<CreatePostReplyResponse> = api::post_request_body("http://127.0.0.1:3000/post/reply", CreatePostReplyRequest::new(
+                    get_board.get_untracked(),
+                    get_category.get_untracked(),
+                    get_file.get_untracked(),
+                    get_text.get_untracked(),
+                    parent,
                     None
                 ))
                 .await;

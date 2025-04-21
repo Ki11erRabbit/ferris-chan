@@ -2,6 +2,7 @@ use std::char::DecodeUtf16;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use chrono::Utc;
+use log::log;
 use sqlx::{Row, SqliteConnection, SqlitePool};
 use uuid::Uuid;
 use crate::config::ServerConfig;
@@ -160,7 +161,7 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
     let mut output = Vec::new();
 
 
-    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.parent IS NULL ORDER BY Post.id DESC LIMIT $4 OFFSET $3")
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, parent, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.parent IS NULL ORDER BY Post.id DESC LIMIT $4 OFFSET $3")
         .bind(board)
         .bind(category)
         .bind(offset)
@@ -176,6 +177,7 @@ pub async fn get_posts(pool: &SqlitePool, board: &str, category: &str, count: i6
             text: row.get("text"),
             timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
+            parent: row.get::<i64, _>("parent")
         })
     }
 
@@ -187,8 +189,9 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
     let mut connection = pool.begin().await?;
     let mut output = Vec::new();
 
+    log::debug!("\n{}\n", parent);
 
-    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where parent = $1 ORDER BY Post.id DESC LIMIT $3 OFFSET $2")
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, parent, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where parent = $1 ORDER BY Post.id DESC LIMIT $3 OFFSET $2")
         .bind(parent)
         .bind(offset)
         .bind(count)
@@ -203,6 +206,7 @@ pub async fn get_post_replies(pool: &SqlitePool, parent: i64, count: i64, offset
             text: row.get("text"),
             timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
+            parent: row.get::<i64, _>("parent")
         })
     }
 
@@ -269,7 +273,7 @@ pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: 
         .execute(&mut *connection)
         .await?;
 
-    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, parent, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
         .bind(board)
         .bind(category)
         .bind(timestamp)
@@ -283,6 +287,7 @@ pub async fn create_post(pool: &SqlitePool, board: &str, category: &str, image: 
             text: row.get("text"),
             timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
+            parent: row.get::<i64, _>("parent")
         };
 
         connection.commit().await?;
@@ -338,7 +343,7 @@ pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, i
         .execute(&mut *connection)
         .await?;
 
-    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
+    let result = sqlx::query("SELECT Post.id as post_number, username, image, text, parent, timestamp FROM Post JOIN User ON User.id = Post.user_id JOIN Board ON Post.board_id = Board.id JOIN Category ON Post.category_id = Category.id where Board.name = $1 AND Category.name = $2 AND Post.timestamp = $3")
         .bind(board)
         .bind(category)
         .bind(timestamp)
@@ -352,6 +357,7 @@ pub async fn create_post_reply(pool: &SqlitePool, board: &str, category: &str, i
             text: row.get("text"),
             timestamp: row.get::<i64, _>("timestamp"),
             post_number: row.get::<i64, _>("post_number") as usize,
+            parent: row.get::<i64, _>("parent")
         };
 
         connection.commit().await?;

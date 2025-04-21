@@ -40,6 +40,7 @@ impl Default for GetPostsResponse {
                     text: String::from("test"),
                     timestamp: 0,
                     post_number: 0,
+                    parent: 0
                 }
             ]
         }
@@ -55,7 +56,7 @@ pub struct GetPostReplyRequest {
 
 #[derive(Deserialize, Serialize)]
 pub struct GetPostReplyResponse {
-    posts: Vec<Post>,
+    pub posts: Vec<Post>,
 }
 
 impl GetPostReplyResponse {
@@ -74,6 +75,7 @@ impl Default for GetPostReplyResponse {
                     text: String::from("idiot"),
                     timestamp: 0,
                     post_number: 1,
+                    parent: 0
                 }
             ]
         }
@@ -124,9 +126,23 @@ pub struct CreatePostReplyRequest {
     pub auth_token: Option<String>,
 }
 
+impl CreatePostReplyRequest {
+    pub fn new(board: String, category: String, image: String, text: String, parent: i64, auth_token: Option<String>) -> Self {
+        Self {
+            board,
+            category,
+            image,
+            text,
+            parent,
+            auth_token,
+        }
+    }
+}
+
+
 #[derive(Deserialize, Serialize)]
 pub struct CreatePostReplyResponse {
-    post: Post,
+    pub post: Post,
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Eq, Hash, Debug)]
@@ -136,6 +152,7 @@ pub struct Post {
     pub text: String,
     pub timestamp: i64,
     pub post_number: usize,
+    pub parent: i64,
 }
 
 impl Default for Post {
@@ -146,6 +163,7 @@ impl Default for Post {
             text: String::new(),
             timestamp: 0,
             post_number: 0,
+            parent: 0,
         }
     }
 }

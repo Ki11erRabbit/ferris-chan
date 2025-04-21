@@ -43,20 +43,17 @@ h6 {
 }
 
 .post-and-replies {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: column;
 }
 
 .post {
   background-color: lightcyan;
   max-width: 60vw;
-  margin: 4rem auto;
+  margin: 2rem auto;
+  padding: 1.5rem;
 }
 
 .post-reply {
-  max-width: 55vw;
-  margin: 5rem auto;
+  max-width: 65vw;
 }
 
 .post-content {

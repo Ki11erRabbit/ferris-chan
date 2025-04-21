@@ -19,7 +19,7 @@ async fn get_posts(path: web::Path<(String, String, i64, i64)>, data: web::Data<
     )
 }
 
-#[get("/post/reply/{parent}/{count}/{offset}")]
+#[get("/post-reply/{parent}/{count}/{offset}")]
 async fn get_post_replies(path: web::Path<(i64, i64, i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let (parent, count, offset) = path.into_inner();
 

@@ -5,22 +5,42 @@ use leptos::{component, view, IntoView};
 use leptos::callback::Callback;
 use leptos::control_flow::For;
 use leptos::either::Either;
-use leptos::prelude::{signal, ClassAttribute, Get, ReadSignal, Resource, Set, Suspend, Suspense, Write};
+use leptos::html::Select;
+use leptos::prelude::{signal, ClassAttribute, Get, OnAttribute, ReadSignal, Resource, Set, Suspend, Suspense, Write};
 use leptos::prelude::ElementChild;
-use ferris_shared::transfer::post::{GetPostsResponse, Post};
+use web_sys::console::count;
+use ferris_shared::transfer::post::{GetPostReplyResponse, GetPostsResponse, Post};
 use crate::api;
-
+use crate::components::send_post::SendPostReply;
 
 #[component]
 pub fn PostCore(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
     username: String,
     timestamp: i64,
     post_number: usize,
     post_text: String,
     post_image: String,
+    #[prop(into)]
+    set_post: Callback<(Post,)>,
+    parent: i64,
 ) -> impl IntoView {
+
+    let (get_reply, set_reply) = signal(false);
     view! {
-        <div class="post-header"><p>{username}</p><span> {DateTime::<Local>::from(DateTime::<Utc>::from_timestamp(timestamp, 0).unwrap()).format("%x(%a)%H:%M:%S").to_string()}{format!(" No.{}", post_number)}</span></div>
+        <div class="post-header">
+            <p>{username}</p><span> {DateTime::<Local>::from(DateTime::<Utc>::from_timestamp(timestamp, 0).unwrap()).format("%x(%a)%H:%M:%S").to_string()}{format!(" No.{}", post_number)}</span>
+            <button on:click=move |_| {
+                set_reply.set(!get_reply.get());
+            }>
+            {if get_reply.get() {
+                "Close"
+            } else {
+                "Reply"
+            } }
+            </button>
+        </div>
         <div class="post-content">
         <div class="post-image">
         {if post_image.len() > 0 {
@@ -47,25 +67,52 @@ pub fn PostCore(
             let(body)
         > <p>{body}</p> </For>
         </div>
+        { move || {
+            let parent = if parent == 0 { post_number as i64 } else { parent };
+            if get_reply.get() {
+                Some(view! {
+                    <SendPostReply parent=parent set_post=set_post get_board=get_board get_category=get_category />
+                })
+            } else {
+                None
+            }
+        }}
     }
 }
 #[component]
 pub fn PostReply(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
     username: String,
     timestamp: i64,
     post_number: usize,
     post_text: String,
     post_image: String,
+    parent: i64,
+    #[prop(into)]
+    set_post: Callback<(Post,)>,
 ) -> impl IntoView {
     view! {
         <div class="post">
-            <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image/>
+            <PostCore
+                username=username
+                timestamp=timestamp
+                post_number=post_number
+                post_text=post_text
+                post_image=post_image
+                get_category=get_category
+                get_board=get_board
+                set_post=set_post
+                parent=parent
+            />
         </div>
     }
 }
 
 #[component]
 pub fn PostToplevel(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
     username: String,
     timestamp: i64,
     post_number: usize,
@@ -78,8 +125,8 @@ pub fn PostToplevel(
     let reply_response: Resource<Option<()>> = Resource::new(
         move || post_number,
         move |post_number| async move {
-            let result = api::get_request(format!("http://127.0.0.1:3000/post/reply/{post_number}/{}/{}", 10, 0).as_str()).await
-                .map(|GetPostsResponse { posts }| posts);
+            let result = api::get_request(format!("http://127.0.0.1:3000/post-reply/{post_number}/{}/{}", 10, 0).as_str()).await
+                .map(|GetPostReplyResponse { posts }| posts);
 
             if let Some(posts) = result {
                 set_posts.set(posts);
@@ -90,13 +137,13 @@ pub fn PostToplevel(
     view! {
         <div class="post-and-replies">
         <div class=(["post", "post-reply"], move || true)>
-        <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image/>
+        <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image get_category=get_category get_board=get_board set_post=set_post_callback parent=(post_number as i64) />
         </div>
         <Suspense fallback = || view! {}>
             {move || Suspend::new(async move { match reply_response.await {
                 None => Either::Left(()),
                 Some(_) => Either::Right(view! {
-                    <PostListReplies get_posts=get_posts/>
+                    <PostListReplies get_posts=get_posts get_category=get_category get_board=get_board set_post=set_post_callback parent=(post_number as i64)/>
                 })
             }})}
         </Suspense>
@@ -107,6 +154,8 @@ pub fn PostToplevel(
 
 #[component]
 pub fn PostList(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
     get_posts: ReadSignal<Vec<Post>>,
 ) -> impl IntoView {
     view! {
@@ -123,6 +172,8 @@ pub fn PostList(
                 post_number=post.post_number
                 post_text=post.text
                 post_image=post.image
+                get_category=get_category
+                get_board=get_board
             />
         </For>
     }
@@ -130,7 +181,12 @@ pub fn PostList(
 
 #[component]
 fn PostListReplies(
+    get_board: ReadSignal<String>,
+    get_category: ReadSignal<String>,
     get_posts: ReadSignal<Vec<Post>>,
+    #[prop(into)]
+    set_post: Callback<(Post,)>,
+    parent: i64,
 ) -> impl IntoView {
     view! {
         <For
@@ -146,6 +202,10 @@ fn PostListReplies(
                 post_number=post.post_number
                 post_text=post.text
                 post_image=post.image
+                get_category=get_category
+                get_board=get_board
+                set_post=set_post
+                parent=parent
             />
         </For>
     }
