@@ -1,3 +1,5 @@
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use chrono::{DateTime, Local, Utc};
 use leptos::{component, view, IntoView};
 use leptos::control_flow::For;
@@ -18,12 +20,32 @@ pub fn Post(
     view! {
         <div class="post">
         <div class="post-header"><p>{username}</p><span> {DateTime::<Local>::from(DateTime::<Utc>::from_timestamp(timestamp, 0).unwrap()).format("%x(%a)%H:%M:%S").to_string()}{format!(" No.{}", post_number)}</span></div>
+        <div class="post-content">
+        <div class="post-image">
         {if post_image.len() > 0 {
-            Some(view! {<img src=format!("data:image/png;base64,{}", post_image) />})
+            let bytes = BASE64_STANDARD.decode(post_image.as_bytes()).unwrap();
+            let size_kb = bytes.len() / 1024;
+
+            if post_image.starts_with("iVBORw0KGgo") {
+                Some(view! {<img src=format!("data:image/png;base64,{}", post_image) /> <span>{format!("{size_kb} KB PNG")}</span>})
+            } else if post_image.starts_with("/9") {
+                Some(view! {<img src=format!("data:image/jpg;base64,{}", post_image) /> <span>{format!("{size_kb} KB JPG")}</span>})
+            } else if post_image.starts_with("UklGRg") && post_image.contains("pXRUJQVlA4"){
+                Some(view! {<img src=format!("data:image/webp;base64,{}", post_image) /> <span>{format!("{size_kb} KB WEBP")}</span>})
+            } else {
+                None
+            }
         } else {
             None
         } }
-        <p>{post_text}</p>
+
+        </div>
+        <For
+            each={move|| post_text.split("\n").map(String::from).collect::<Vec<String>>()}
+            key=|val| val.clone()
+            let(body)
+        > <p>{body}</p> </For>
+        </div>
         </div>
     }
 }
