@@ -9,6 +9,7 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
 use actix_web::web::Data;
+use clap::Parser;
 use crate::config::{BoardConfig, Config};
 use crate::database::{DatabaseDriver, DbFactory};
 
@@ -23,13 +24,23 @@ impl AppState {
     }
 }
 
+#[derive(Parser, Debug)]
+pub struct Args {
+    #[arg(short, long, default_value = "/etc/ferris-chan/config.toml")]
+    config: String,
+    #[arg(short, long, default_value = "info")]
+    log_level: String,
+}
+
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    let args = Args::parse();
+
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or(&args.log_level));
 
     let mut config = OpenOptions::new()
         .read(true)
-        .open("config.toml")?;
+        .open(&args.config)?;
 
     let mut buf = String::new();
     config.read_to_string(&mut buf)?;
