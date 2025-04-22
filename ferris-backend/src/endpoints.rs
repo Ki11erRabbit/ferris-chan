@@ -7,11 +7,11 @@ use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use ferris_shared::transfer::RootGetResponse;
 use crate::AppState;
-use crate::config::RuntimeConfig;
+use crate::config::BoardConfig;
 
 #[get("/")]
 async fn get_home(_: HttpRequest, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
-    let RuntimeConfig { name, logo, boards, categories, .. } = &data.get_ref().config;
+    let BoardConfig { name, logo, boards, categories, .. } = &data.get_ref().config;
 
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type(ContentType::json())

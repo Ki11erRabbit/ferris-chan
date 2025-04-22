@@ -1,4 +1,8 @@
+[server]
 port = 3000
+workers = 1
+
+[board]
 name = "Ferris-chan"
 logo = "Ferris-chan.png"
 categories = ["Japanese Culture","Interests", "Creative", "Other"]
@@ -16,6 +20,11 @@ boards = [
     { name = "News", category = "Other" },
     { name = "Health & Fitness", category = "Other" }
 ]
-workers = 1
 prevent_anonymous_posts = false
 block_registrations = false
+
+[db]
+url = ""
+type = "sqlite"
+username = ""
+password = ""

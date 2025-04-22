@@ -13,7 +13,7 @@ async fn get_posts(path: web::Path<(String, String, i64, i64)>, data: web::Data<
     let category = urlencoding::decode(category.as_str()).unwrap();
     let board = urlencoding::decode(board.as_str()).unwrap();
 
-    let result = crate::database::get_posts(&data.get_ref().db, &board, &category, count, offset).await
+    let result = data.get_ref().db.get_posts(&board, &category, count, offset).await
         .expect("unable to get posts");
 
     Ok(HttpResponse::build(StatusCode::OK)
@@ -28,7 +28,7 @@ async fn get_post_replies(path: web::Path<(i64, i64, i64)>, data: web::Data<AppS
     let (parent, count, offset) = path.into_inner();
 
     // Eventually make it so that it only pulls recent active posts replies
-    let result = crate::database::get_post_replies(&data.get_ref().db, parent, count, offset).await
+    let result = data.get_ref().db.get_post_replies(parent, count, offset).await
         .expect("unable to get posts");
 
     Ok(HttpResponse::build(StatusCode::OK)
@@ -41,7 +41,7 @@ async fn get_post_replies(path: web::Path<(i64, i64, i64)>, data: web::Data<AppS
 async fn get_post_image(path: web::Path<(i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let (post_id) = path.into_inner();
 
-    let result = crate::database::get_post_image(&data.get_ref().db, post_id).await
+    let result = data.get_ref().db.get_post_image(post_id).await
         .expect("unable to get posts");
 
     Ok(HttpResponse::build(StatusCode::OK)
@@ -54,14 +54,14 @@ async fn get_post_image(path: web::Path<(i64)>, data: web::Data<AppState>) -> st
 #[post("/post")]
 async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     log::debug!("Create post request : {:?}", &req);
-    let CreatePostRequest { board, category, image, text, auth_token} = req.into_inner();
+    let CreatePostRequest { board, category, image, text, auth_token, alt_text} = req.into_inner();
 
 
     if auth_token.is_none() && data.get_ref().config.prevent_anonymous_posts {
         return Ok(HttpResponse::new(StatusCode::SERVICE_UNAVAILABLE))
     }
 
-    let result = crate::database::create_post(&data.get_ref().db, &board, &category, &image, &text, auth_token)
+    let result = data.get_ref().db.create_post(&board, &category, &image, &alt_text, &text, auth_token)
         .await
     .expect("unable to create post");
 
@@ -74,13 +74,13 @@ async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) ->
 
 #[post("/post/reply")]
 async fn create_post_reply(req: Json<CreatePostReplyRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
-    let CreatePostReplyRequest { board, category, image, text, auth_token, parent } = req.into_inner();
+    let CreatePostReplyRequest { board, category, image, text, auth_token, parent, alt_text } = req.into_inner();
 
     if auth_token.is_none() && data.get_ref().config.prevent_anonymous_posts {
         return Ok(HttpResponse::new(StatusCode::SERVICE_UNAVAILABLE))
     }
 
-    let result = crate::database::create_post_reply(&data.get_ref().db, &board, &category, &image, &text, parent, auth_token)
+    let result = data.get_ref().db.create_post_reply(&board, &category, &image, &alt_text, &text, parent, auth_token)
         .await
         .expect("unable to create post");
 

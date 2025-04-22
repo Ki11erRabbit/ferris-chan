@@ -5,26 +5,26 @@ mod database;
 
 use std::fs::OpenOptions;
 use std::io::Read;
+use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
 use actix_web::web::Data;
-use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::SqlitePool;
-use crate::config::{RuntimeConfig, ServerConfig};
+use crate::config::{BoardConfig, Config};
+use crate::database::{DatabaseDriver, DbFactory};
 
 #[derive(Clone)]
 pub struct AppState {
-    pub config: RuntimeConfig,
-    pub db: SqlitePool,
+    pub config: BoardConfig,
+    pub db: Arc<dyn DatabaseDriver>,
 }
 impl AppState {
-    pub fn new(config: RuntimeConfig, db: SqlitePool) -> Self {
+    pub fn new(config: BoardConfig, db: Arc<dyn DatabaseDriver>) -> Self {
         Self { config, db }
     }
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> anyhow::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
     let mut config = OpenOptions::new()
@@ -35,22 +35,16 @@ async fn main() -> std::io::Result<()> {
     config.read_to_string(&mut buf)?;
 
 
-    let mut config: ServerConfig = toml::from_str(buf.as_str()).expect("Failed to parse config.toml");
+    let mut config: Config = toml::from_str(buf.as_str()).expect("Failed to parse config.toml");
 
     config.get_logo();
 
-    let port = config.port;
+    let port = config.server.port;
 
-    let options = SqliteConnectOptions::new()
-        .filename("database.sqlite")
-        .create_if_missing(true);
+    let db_driver = DbFactory::initialize_database(&config).await?;
 
-    let mut pool =  SqlitePool::connect_with(options).await.unwrap();
-
-    database::initialize_database(&config, &mut pool).await
-        .expect("Failed to initialize database");
-    let workers = config.workers;
-    let config: RuntimeConfig = config.into();
+    let workers = config.server.workers;
+    let config: BoardConfig = config.into();
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
@@ -61,7 +55,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .app_data(Data::new(AppState::new(config.clone(), pool.clone())))
+            .app_data(Data::new(AppState::new(config.clone(), db_driver.clone())))
             .service(endpoints::get_home)
             .service(endpoints::user::register_user)
             .service(endpoints::user::login_user)

@@ -37,6 +37,7 @@ impl Default for GetPostsResponse {
                 Post {
                     username: String::from("Anonymous"),
                     image: String::new(),
+                    alt_text: String::new(),
                     text: String::from("test"),
                     timestamp: 0,
                     post_number: 0,
@@ -72,6 +73,7 @@ impl Default for GetPostReplyResponse {
                 Post {
                     username: String::from("Anonymous"),
                     image: String::new(),
+                    alt_text: String::new(),
                     text: String::from("idiot"),
                     timestamp: 0,
                     post_number: 1,
@@ -87,17 +89,19 @@ pub struct CreatePostRequest {
     pub board: String,
     pub category: String,
     pub image: String,
+    pub alt_text: String,
     pub text: String,
     #[serde(default)]
     pub auth_token: Option<String>,
 }
 
 impl CreatePostRequest {
-    pub fn new(board: String, category: String, image: String, text: String, auth_token: Option<String>) -> Self {
+    pub fn new(board: String, category: String, image: String, alt_text: String, text: String, auth_token: Option<String>) -> Self {
         Self {
             board,
             category,
             image,
+            alt_text,
             text,
             auth_token,
         }
@@ -120,6 +124,7 @@ pub struct CreatePostReplyRequest {
     pub board: String,
     pub category: String,
     pub image: String,
+    pub alt_text: String,
     pub text: String,
     pub parent: i64,
     #[serde(default)]
@@ -127,11 +132,12 @@ pub struct CreatePostReplyRequest {
 }
 
 impl CreatePostReplyRequest {
-    pub fn new(board: String, category: String, image: String, text: String, parent: i64, auth_token: Option<String>) -> Self {
+    pub fn new(board: String, category: String, image: String, alt_text: String, text: String, parent: i64, auth_token: Option<String>) -> Self {
         Self {
             board,
             category,
             image,
+            alt_text,
             text,
             parent,
             auth_token,
@@ -149,6 +155,7 @@ pub struct CreatePostReplyResponse {
 pub struct Post {
     pub username: String,
     pub image: String,
+    pub alt_text: String,
     pub text: String,
     pub timestamp: i64,
     pub post_number: usize,
@@ -160,6 +167,7 @@ impl Default for Post {
         Post {
             username: String::new(),
             image: String::new(),
+            alt_text: String::new(),
             text: String::new(),
             timestamp: 0,
             post_number: 0,

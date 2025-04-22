@@ -12,7 +12,7 @@ async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
         return Ok(HttpResponse::new(StatusCode::UNAUTHORIZED));
     }
 
-    let auth_token = match crate::database::login_user(&data.get_ref().db, &email, &password).await {
+    let auth_token = match data.get_ref().db.login_user(&email, &password).await {
         Ok(auth_token) => auth_token,
         Err(e) => {
             eprintln!("login_user error: {}", e);
@@ -30,7 +30,7 @@ async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
 async fn logout_user(req: web::Json<LogoutRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let LogoutRequest{ token } = req.into_inner();
 
-    match crate::database::logout_user(&data.get_ref().db, &token).await {
+    match data.get_ref().db.logout_user(&token).await {
         Ok(_) => Ok(HttpResponse::new(StatusCode::NO_CONTENT)),
         Err(e) => {
             eprintln!("logout error: {}", e);
@@ -50,7 +50,7 @@ async fn register_user(req: web::Json<RegisterRequest>, data: web::Data<AppState
         return Ok(HttpResponse::new(StatusCode::UNAUTHORIZED));
     }
 
-    let auth_token = match crate::database::register_user(&data.get_ref().db, &username, &email, &password).await {
+    let auth_token = match data.get_ref().db.register_user(&username, &email, &password).await {
         Ok(auth_token) => auth_token,
         Err(e) => {
             eprintln!("login_user error: {}", e);

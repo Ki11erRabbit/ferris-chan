@@ -6,9 +6,12 @@ edition = "2024"
 [dependencies]
 actix-cors = "0.7.1"
 actix-web = "4.10.2"
+anyhow = "1.0.98"
 argon2 = "0.5.3"
+async-trait = "0.1.88"
 base64 = "0.22.1"
 chrono = "0.4.40"
+clap = "4.5.37"
 env_logger = "0.11.8"
 ferris_shared = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
