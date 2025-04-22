@@ -3,10 +3,17 @@ use leptos::{component, view, IntoView};
 use leptos::callback::Callback;
 use leptos::control_flow::For;
 use leptos::either::{Either, EitherOf3};
-use leptos::prelude::{signal, ClassAttribute, Get, GlobalAttributes, InnerHtmlAttribute, OnAttribute, ReadSignal, Resource, Set, Suspend, Suspense, Write};
+use leptos::logging::log;
+use leptos::prelude::{signal, ClassAttribute, Get, GetUntracked, GlobalAttributes, GlobalOnAttributes, OnAttribute, Read, ReadSignal, Resource, Set, StorageAccess, Suspend, Suspense, Write, WriteSignal};
 use leptos::prelude::ElementChild;
+use leptos::task::spawn_local;
 use leptos_router::components::A;
-use ferris_shared::transfer::post::{GetPostReplyResponse, Post};
+use wasm_bindgen::JsValue;
+use web_sys::wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::Closure;
+use web_sys::Event;
+use web_sys::js_sys::Function;
+use ferris_shared::transfer::post::{GetPostReplyResponse, GetPostsResponse, Post};
 use crate::api;
 use crate::components::base64_img::Base64ImgSize;
 use crate::components::send_post::SendPostReply;
@@ -32,7 +39,7 @@ pub fn PostCore(
             <button on:click=move |_| {
                 set_reply.set(!get_reply.get());
             }>
-            {if get_reply.get() {
+            {move ||if get_reply.get() {
                 "Close"
             } else {
                 "Reply"
@@ -147,10 +154,48 @@ pub fn PostToplevel(
 
 #[component]
 pub fn PostList(
+    get_page: ReadSignal<u64>,
+    set_page: WriteSignal<u64>,
     get_board: ReadSignal<String>,
     get_category: ReadSignal<String>,
     get_posts: ReadSignal<Vec<Post>>,
+    set_posts: WriteSignal<Vec<Post>>,
 ) -> impl IntoView {
+
+
+
+    let onscroll = move |_: Event| {
+
+        let window = web_sys::window().unwrap();
+        let inner_height = window.inner_height().unwrap().as_f64().unwrap();
+        let scroll_y = window.scroll_y().unwrap();
+        let document = window.document().unwrap();
+        let body = document.body().unwrap();
+        let offset_height = body.offset_height();
+
+        if (inner_height + scroll_y) >= offset_height as f64 {
+            spawn_local(async move {
+                let result = api::get_request(format!("http://127.0.0.1:3000/post/{}/{}/{}/{}", get_category.get_untracked(), get_board.get_untracked(), 10, get_page.get_untracked()).as_str()).await
+                    .map(|GetPostsResponse { posts }| posts);
+
+
+                if let Some(posts) = result {
+                    *set_page.write() += posts.len() as u64;
+                    set_posts.write().extend(posts);
+                }
+            });
+        }
+    };
+
+    let onscroll = Box::new(onscroll) as Box<dyn FnMut(Event)>;
+
+    let closure = Closure::wrap(onscroll);
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
+    let body = document.body().unwrap();
+    body.set_onscroll(Some(closure.as_ref().unchecked_ref::<Function>()));
+    closure.forget();
+
     view! {
         <For
             each=move|| {

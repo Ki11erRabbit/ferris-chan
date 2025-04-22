@@ -10,6 +10,7 @@ use crate::components::send_post::SendPost;
 pub fn Board() -> impl IntoView {
 
     let (get_posts, set_posts) = signal(Vec::new());
+    let (get_page, set_page) = signal(10);
     let set_post_callback: Callback<(Post,)> = Callback::from(move |post: Post| { set_posts.write().insert(0, post); });
 
     let params = use_params_map();
@@ -21,6 +22,7 @@ pub fn Board() -> impl IntoView {
                 .map(|GetPostsResponse { posts }| posts);
 
             if let Some(posts) = result {
+                *set_page.write() += posts.len() as u64;
                 set_posts.set(posts);
             }
             Some(())
@@ -43,7 +45,14 @@ pub fn Board() -> impl IntoView {
                 Some(_) => Either::Right(view! {
                     <h1>{params.read().get("board").unwrap().clone()}</h1>
                     <SendPost get_board=get_board get_category=get_category set_post=set_post_callback />
-                    <PostList get_posts=get_posts get_board=get_board get_category=get_category/>
+                    <PostList
+                        get_posts=get_posts
+                        get_board=get_board
+                        get_category=get_category
+                        get_page=get_page
+                        set_page=set_page
+                        set_posts=set_posts
+                    />
                 })
             }})}
         </Suspense>

@@ -20,6 +20,7 @@ chrono = {  version = "0.4.40", features = ["alloc"] }
 web-sys = { version = "0.3", features = ["FileList", "Blob", "File"] }
 base64 = "0.22.1"
 wasm-bindgen-futures = "0.4.50"
+wasm-bindgen = "0.2"
 
 # utils
 # strum = { version = "0.25", features = ["derive", "strum_macros"] }

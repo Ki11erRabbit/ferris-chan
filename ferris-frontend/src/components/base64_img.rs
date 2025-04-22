@@ -29,7 +29,9 @@ pub fn Base64Img(image: String) -> impl IntoView {
 pub fn Base64ImgSize(image: String) -> impl IntoView {
     view! {
         {if image.len() > 0 {
-            let bytes = BASE64_STANDARD.decode(image.as_bytes()).unwrap();
+            let Ok(bytes) = BASE64_STANDARD.decode(image.as_bytes()) else {
+                return None
+            };
             let size_kb = bytes.len() / 1024;
 
             if image.starts_with("iVBORw0KGgo") {
