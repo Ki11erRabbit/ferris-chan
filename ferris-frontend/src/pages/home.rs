@@ -23,9 +23,15 @@ pub fn Home() -> impl IntoView {
                 None => Either::Left(view! { <h1>"Source site not found"</h1> }),
                 Some(home_page) => Either::Right(view! {
 
+
+                    <div class="logo">
                     <Base64Img image=home_page.logo />
                     <h1>{home_page.title.clone()}</h1>
-                    <div class="categories"><For
+                    </div>
+                    <div class="categories">
+                    <div class="categories-header"><h2>{"Boards"}</h2></div>
+                    <div class="categories-list">
+                    <For
                         each=move|| {
                             let categories =home_page.categories.clone();
                             categories.into_iter()
@@ -38,6 +44,7 @@ pub fn Home() -> impl IntoView {
                             .map(|BoardInfo { name, ..}| view! { <li><a href=format!("http://localhost:3001/{}/{}",category, name)>{name.clone()}</a></li>})
                             .collect::<Vec<_>>()
                     }</ul></div></For>
+                    </div>
                     </div>
 
                 })

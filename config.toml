@@ -1,8 +1,21 @@
 port = 3000
 name = "Ferris-chan"
 logo = "Ferris-chan.png"
-categories = ["Japanese Culture","Interests"]
-boards = [{ name = "Technology", category = "Interests" }, { name = "Anime & Manga", category = "Japanese Culture" }]
+categories = ["Japanese Culture","Interests", "Creative", "Other"]
+boards = [
+    { name = "Technology", category = "Interests" },
+    { name = "Comics & Cartoons", category = "Interests" },
+    { name = "Video Games", category = "Interests" },
+    { name = "Anime & Manga", category = "Japanese Culture" },
+    { name = "Anime/Wallpapers", category = "Japanese Culture" },
+    { name = "Anime/Cute", category = "Japanese Culture" },
+    { name = "Papercraft & Origami", category = "Creative" },
+    { name = "Photography", category = "Creative" },
+    { name = "Food & Cooking", category = "Creative" },
+    { name = "Politics", category = "Creative" },
+    { name = "News", category = "Other" },
+    { name = "Health & Fitness", category = "Other" }
+]
 workers = 1
 prevent_anonymous_posts = false
 block_registrations = false
