@@ -1,4 +1,5 @@
 use leptos::either::Either;
+use leptos::logging::log;
 use leptos::prelude::*;
 use ferris_shared::transfer::{RootGetResponse, BoardInfo};
 use crate::api;
@@ -41,7 +42,12 @@ pub fn Home() -> impl IntoView {
                     ><div class="board-category"> <h3> {category.clone()}</h3> <ul>{
                         home_page.boards.iter()
                             .filter(|BoardInfo { category: cat, ..}| *cat == category)
-                            .map(|BoardInfo { name, ..}| view! { <li><a href=format!("http://localhost:3001/{}/{}",category, name)>{name.clone()}</a></li>})
+                            .map(|BoardInfo { name, ..}| {
+                                let category_url = urlencoding::encode(&category);
+                                let board_url = urlencoding::encode(&name);
+
+                                view! { <li><a href=format!("http://localhost:3001/{}/{}",category_url, board_url)>{name.clone()}</a></li>}
+                        })
                             .collect::<Vec<_>>()
                     }</ul></div></For>
                     </div>

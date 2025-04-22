@@ -9,6 +9,10 @@ use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyRespo
 async fn get_posts(path: web::Path<(String, String, i64, i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let (category, board, count, offset) = path.into_inner();
     // Eventually make it so that it only pulls recent active posts
+
+    let category = urlencoding::decode(category.as_str()).unwrap();
+    let board = urlencoding::decode(board.as_str()).unwrap();
+
     let result = crate::database::get_posts(&data.get_ref().db, &board, &category, count, offset).await
         .expect("unable to get posts");
 

@@ -175,7 +175,11 @@ pub fn PostList(
 
         if (inner_height + scroll_y) >= offset_height as f64 {
             spawn_local(async move {
-                let result = api::get_request(format!("http://127.0.0.1:3000/post/{}/{}/{}/{}", get_category.get_untracked(), get_board.get_untracked(), 10, get_page.get_untracked()).as_str()).await
+                let board = get_board.get_untracked();
+                let board = urlencoding::encode(board.as_str());
+
+
+                let result = api::get_request(format!("http://127.0.0.1:3000/post/{}/{}/{}/{}", get_category.get_untracked(), board, 10, get_page.get_untracked()).as_str()).await
                     .map(|GetPostsResponse { posts }| posts);
 
 

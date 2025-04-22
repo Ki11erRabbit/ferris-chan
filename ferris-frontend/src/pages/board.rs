@@ -18,6 +18,9 @@ pub fn Board() -> impl IntoView {
     let board_response: Resource<Option<()>> = Resource::new(
         move || (params.read().get("category").unwrap().clone(), params.read().get("board").unwrap().clone()),
         move |(category, board)| async move {
+            let category = urlencoding::encode(category.as_str());
+            let board = urlencoding::encode(board.as_str());
+
             let result = api::get_request(format!("http://127.0.0.1:3000/post/{category}/{board}/{}/{}", 10, 0).as_str()).await
                 .map(|GetPostsResponse { posts }| posts);
 

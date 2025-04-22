@@ -124,9 +124,13 @@ pub fn SendPostReply(
         >{move || get_text.get_untracked()}</textarea>
         <button on:click=move |_| {
             spawn_local(async move {
+                let category = get_category.get_untracked();
+                let category = urlencoding::decode(category.as_str()).unwrap();
+                let board = get_board.get_untracked();
+                let board = urlencoding::decode(board.as_str()).unwrap();
                 let result: Option<CreatePostReplyResponse> = api::post_request_body("http://127.0.0.1:3000/post/reply", CreatePostReplyRequest::new(
-                    get_board.get_untracked(),
-                    get_category.get_untracked(),
+                    board.to_string(),
+                    category.to_string(),
                     get_file.get_untracked(),
                     get_text.get_untracked(),
                     parent,
