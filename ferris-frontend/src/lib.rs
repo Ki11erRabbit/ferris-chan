@@ -23,7 +23,7 @@ pub fn App() -> impl IntoView {
         <Html attr:lang="en" attr:dir="ltr" attr:data-theme="light" />
 
         // sets the document title
-        <Title text="Welcome to Leptos CSR" />
+        <Title text="Ferris-chan" />
 
         // injects metadata in the <head> of the page
         <Meta charset="UTF-8" />
