@@ -1,8 +1,9 @@
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use leptos::{component, view, IntoView};
+use leptos::either::Either;
 use leptos::logging::log;
-use leptos::prelude::{signal, Callable, Callback, Get, GetUntracked, OnAttribute, PropAttribute, ReadSignal, Set, ElementChild, OnTargetAttribute, use_context};
+use leptos::prelude::{signal, Callable, Callback, Get, GetUntracked, OnAttribute, PropAttribute, ReadSignal, Set, ElementChild, OnTargetAttribute, use_context, Read, WriteSignal, ClassAttribute};
 use leptos::task::spawn_local;
 use leptos::web_sys::{HtmlInputElement};
 use leptos::web_sys::Blob;
@@ -10,6 +11,7 @@ use leptos::wasm_bindgen::JsCast;
 use web_sys::js_sys::{ArrayBuffer, Uint8Array};
 use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, Post};
 use crate::api;
+use crate::components::base64_img::Base64Img;
 
 async fn to_base64(data: Blob) -> String {
     let file_raw_data = wasm_bindgen_futures::JsFuture::from(data.array_buffer())
@@ -34,9 +36,12 @@ async fn to_base64(data: Blob) -> String {
 
 #[component]
 pub fn UploadFile(
+    set_alt_text: WriteSignal<String>,
     #[prop(into)]
     set_file: Callback<(String,)>
 ) -> impl IntoView {
+
+    let (get_image, set_image) = signal(String::new());
 
 
     let handle_file_conversion = move |event: leptos::ev::Event| {
@@ -48,17 +53,37 @@ pub fn UploadFile(
                 let blob = file.slice().expect("File reading should not fail");
 
                 let file = to_base64(blob).await;
+                set_image.set(file.clone());
                 set_file.run((file,))
             });
         }
     };
 
     view! {
-        <input
-            type="file"
-            on:input=handle_file_conversion
+        {move || if get_image.read().len() == 0 {
+            Either::Left(view! {
+                <div class="post-upload">
+                <input
+                    type="file"
+                    on:input=handle_file_conversion
+                />
+                </div>
+            })
+        } else {
+            Either::Right(view! {
+                <div class="post-upload">
+                <Base64Img image=get_image.get() />
+                <div class="post-alt-text">
+                <h5>"Enter Alt Text"</h5>
+                <input type="text" on:input:target=move |ev| set_alt_text.set(ev.target().value()) />
+                </div>
+                <button on:click=move |_| {
+                    set_image.set(String::new())
+                }>{"clear image"}</button>
+                </div>
+            })
+        }}
 
-        />
     }
 }
 
@@ -79,8 +104,8 @@ pub fn SendPost(
     let server_url: String = use_context().unwrap();
 
     view! {
-        <UploadFile set_file=set_file_callback />
-        <input type="text" on:input:target=move |ev| set_alt_text.set(ev.target().value()) />
+        <div class="send-post">
+        <UploadFile set_file=set_file_callback set_alt_text=set_alt_text />
         <textarea
             prop:value=move || get_text.get()
             on:input:target=move |ev| set_text.set(ev.target().value())
@@ -105,6 +130,7 @@ pub fn SendPost(
         }>
             "Post"
         </button>
+        </div>
     }
 }
 
@@ -125,8 +151,8 @@ pub fn SendPostReply(
     let server_url: String = use_context().unwrap();
 
     view! {
-        <UploadFile set_file=set_file_callback />
-        <input type="text" on:input:target=move |ev| set_alt_text.set(ev.target().value()) />
+        <div class="send-post">
+        <UploadFile set_file=set_file_callback set_alt_text=set_alt_text />
         <textarea
             prop:value=move || get_text.get()
             on:input:target=move |ev| set_text.set(ev.target().value())
@@ -156,5 +182,6 @@ pub fn SendPostReply(
         }>
             "Post"
         </button>
+        </div>
     }
 }

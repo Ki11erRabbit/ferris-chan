@@ -4,18 +4,22 @@ use leptos::prelude::*;
 
 
 #[component]
-pub fn Base64Img(image: String) -> impl IntoView {
+pub fn Base64Img(
+    image: String,
+    #[prop(default = String::from(""))]
+    alt_text: String,
+) -> impl IntoView {
     view! {
         {if image.len() > 0 {
             let bytes = BASE64_STANDARD.decode(image.as_bytes()).unwrap();
             let size_kb = bytes.len() / 1024;
 
             if image.starts_with("iVBORw0KGgo") {
-                Some(view! {<img src=format!("data:image/png;base64,{}", image) />})
+                Some(view! {<img src=format!("data:image/png;base64,{}", image) alt=alt_text />})
             } else if image.starts_with("/9") {
-                Some(view! {<img src=format!("data:image/jpg;base64,{}", image) />})
+                Some(view! {<img src=format!("data:image/jpg;base64,{}", image) alt=alt_text />})
             } else if image.starts_with("UklGRg") && image.contains("pXRUJQVlA4"){
-                Some(view! {<img src=format!("data:image/webp;base64,{}", image) />})
+                Some(view! {<img src=format!("data:image/webp;base64,{}", image) alt=alt_text />})
             } else {
                 None
             }
@@ -26,7 +30,11 @@ pub fn Base64Img(image: String) -> impl IntoView {
 }
 
 #[component]
-pub fn Base64ImgSize(image: String) -> impl IntoView {
+pub fn Base64ImgSize(
+    image: String,
+    #[prop(default = String::from(""))]
+    alt_text: String,
+) -> impl IntoView {
     view! {
         {if image.len() > 0 {
             let Ok(bytes) = BASE64_STANDARD.decode(image.as_bytes()) else {
@@ -35,11 +43,11 @@ pub fn Base64ImgSize(image: String) -> impl IntoView {
             let size_kb = bytes.len() / 1024;
 
             if image.starts_with("iVBORw0KGgo") {
-                Some(view! {<img src=format!("data:image/png;base64,{}", image) /> <span>{format!("{size_kb} KB PNG")}</span>})
+                Some(view! {<img src=format!("data:image/png;base64,{}", image) alt=alt_text /> <span>{format!("{size_kb} KB PNG")}</span>})
             } else if image.starts_with("/9") {
-                Some(view! {<img src=format!("data:image/jpg;base64,{}", image) /> <span>{format!("{size_kb} KB JPG")}</span>})
+                Some(view! {<img src=format!("data:image/jpg;base64,{}", image) alt=alt_text /> <span>{format!("{size_kb} KB JPG")}</span>})
             } else if image.starts_with("UklGRg") && image.contains("pXRUJQVlA4"){
-                Some(view! {<img src=format!("data:image/webp;base64,{}", image) /> <span>{format!("{size_kb} KB WEBP")}</span>})
+                Some(view! {<img src=format!("data:image/webp;base64,{}", image) alt=alt_text /> <span>{format!("{size_kb} KB WEBP")}</span>})
             } else {
                 None
             }

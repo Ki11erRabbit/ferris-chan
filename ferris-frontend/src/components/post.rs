@@ -50,7 +50,7 @@ pub fn PostCore(
         </div>
         <div class="post-content">
         <div class="post-image">
-        <Base64ImgSize image=post_image />
+        <Base64ImgSize image=post_image alt_text=post_alt_text />
 
         </div>
         <For
