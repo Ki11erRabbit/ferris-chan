@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local, Utc};
 use leptos::{component, view, IntoView};
 use leptos::callback::Callback;
+use leptos::context::use_context;
 use leptos::control_flow::For;
 use leptos::either::{Either, EitherOf3};
 use leptos::logging::log;
@@ -27,6 +28,7 @@ pub fn PostCore(
     post_number: usize,
     post_text: String,
     post_image: String,
+    post_alt_text: String,
     #[prop(into)]
     set_post: Callback<(Post,)>,
     parent: i64,
@@ -87,6 +89,7 @@ pub fn PostReply(
     post_number: usize,
     post_text: String,
     post_image: String,
+    post_alt_text: String,
     parent: i64,
     #[prop(into)]
     set_post: Callback<(Post,)>,
@@ -103,6 +106,7 @@ pub fn PostReply(
                 get_board=get_board
                 set_post=set_post
                 parent=parent
+                post_alt_text=post_alt_text
             />
         </div>
     }
@@ -117,14 +121,16 @@ pub fn PostToplevel(
     post_number: usize,
     post_text: String,
     post_image: String,
+    post_alt_text: String,
 ) -> impl IntoView {
     let (get_posts, set_posts) = signal(Vec::new());
     let set_post_callback: Callback<(Post,)> = Callback::from(move |post: Post| { set_posts.write().insert(0, post); });
+    let server_url: String = use_context().unwrap();
 
     let reply_response: Resource<Option<()>> = Resource::new(
-        move || post_number,
-        move |post_number| async move {
-            let result = api::get_request(format!("http://127.0.0.1:3000/post-reply/{post_number}/{}/{}", 10, 0).as_str()).await
+        move || (post_number, server_url.clone()),
+        move |(post_number, server_url)| async move {
+            let result = api::get_request(format!("{server_url}/post-reply/{post_number}/{}/{}", 10, 0).as_str()).await
                 .map(|GetPostReplyResponse { posts }| posts);
 
             if let Some(posts) = result {
@@ -137,7 +143,7 @@ pub fn PostToplevel(
 
         <div class="post-and-replies" id=format!("{post_number}")>
         <div class=(["post", "post-reply"], move || true)>
-        <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image get_category=get_category get_board=get_board set_post=set_post_callback parent=(post_number as i64) />
+        <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image get_category=get_category get_board=get_board set_post=set_post_callback parent=post_number as i64 post_alt_text=post_alt_text />
         </div>
         <Suspense fallback = || view! {}>
             {move || Suspend::new(async move { match reply_response.await {
@@ -172,6 +178,7 @@ pub fn PostList(
         let document = window.document().unwrap();
         let body = document.body().unwrap();
         let offset_height = body.offset_height();
+        let server_url: String = use_context().unwrap();
 
         if (inner_height + scroll_y) >= offset_height as f64 {
             spawn_local(async move {
@@ -179,7 +186,7 @@ pub fn PostList(
                 let board = urlencoding::encode(board.as_str());
 
 
-                let result = api::get_request(format!("http://127.0.0.1:3000/post/{}/{}/{}/{}", get_category.get_untracked(), board, 10, get_page.get_untracked()).as_str()).await
+                let result = api::get_request(format!("{server_url}/post/{}/{}/{}/{}", get_category.get_untracked(), board, 10, get_page.get_untracked()).as_str()).await
                     .map(|GetPostsResponse { posts }| posts);
 
 
@@ -216,6 +223,7 @@ pub fn PostList(
                 post_image=post.image
                 get_category=get_category
                 get_board=get_board
+                post_alt_text=post.alt_text
             />
         </For>
     }
@@ -248,6 +256,7 @@ fn PostListReplies(
                 get_board=get_board
                 set_post=set_post
                 parent=parent
+                post_alt_text=post.alt_text
             />
         </For>
     }

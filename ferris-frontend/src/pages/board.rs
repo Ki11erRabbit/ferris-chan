@@ -14,14 +14,15 @@ pub fn Board() -> impl IntoView {
     let set_post_callback: Callback<(Post,)> = Callback::from(move |post: Post| { set_posts.write().insert(0, post); });
 
     let params = use_params_map();
+    let server_url: String = use_context().unwrap();
 
     let board_response: Resource<Option<()>> = Resource::new(
-        move || (params.read().get("category").unwrap().clone(), params.read().get("board").unwrap().clone()),
-        move |(category, board)| async move {
+        move || (params.read().get("category").unwrap().clone(), params.read().get("board").unwrap().clone(), server_url.clone()),
+        move |(category, board, server_url)| async move {
             let category = urlencoding::encode(category.as_str());
             let board = urlencoding::encode(board.as_str());
 
-            let result = api::get_request(format!("http://127.0.0.1:3000/post/{category}/{board}/{}/{}", 10, 0).as_str()).await
+            let result = api::get_request(format!("{server_url}/post/{category}/{board}/{}/{}", 10, 0).as_str()).await
                 .map(|GetPostsResponse { posts }| posts);
 
             if let Some(posts) = result {

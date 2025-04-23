@@ -2,7 +2,7 @@ use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use leptos::{component, view, IntoView};
 use leptos::logging::log;
-use leptos::prelude::{signal, Callable, Callback, Get, GetUntracked, OnAttribute, PropAttribute, ReadSignal, Set, ElementChild, OnTargetAttribute};
+use leptos::prelude::{signal, Callable, Callback, Get, GetUntracked, OnAttribute, PropAttribute, ReadSignal, Set, ElementChild, OnTargetAttribute, use_context};
 use leptos::task::spawn_local;
 use leptos::web_sys::{HtmlInputElement};
 use leptos::web_sys::Blob;
@@ -74,19 +74,25 @@ pub fn SendPost(
     let set_file_callback: Callback<(String,)> = Callback::from(move |file| {set_file.set(file)});
 
     let (get_text, set_text) = signal(String::new());
+    let (get_alt_text, set_alt_text) = signal(String::new());
+
+    let server_url: String = use_context().unwrap();
 
     view! {
         <UploadFile set_file=set_file_callback />
+        <input type="text" on:input:target=move |ev| set_alt_text.set(ev.target().value()) />
         <textarea
             prop:value=move || get_text.get()
             on:input:target=move |ev| set_text.set(ev.target().value())
         >{move || get_text.get_untracked()}</textarea>
         <button on:click=move |_| {
+            let server_url = server_url.clone();
             spawn_local(async move {
-                let result: Option<CreatePostResponse> = api::post_request_body("http://127.0.0.1:3000/post", CreatePostRequest::new(
+                let result: Option<CreatePostResponse> = api::post_request_body(&format!("{server_url}/post"), CreatePostRequest::new(
                     get_board.get_untracked(),
                     get_category.get_untracked(),
                     get_file.get_untracked(),
+                    get_alt_text.get_untracked(),
                     get_text.get_untracked(),
                     None
                 ))
@@ -115,23 +121,28 @@ pub fn SendPostReply(
     let set_file_callback: Callback<(String,)> = Callback::from(move |file| {set_file.set(file)});
 
     let (get_text, set_text) = signal(String::new());
+    let (get_alt_text, set_alt_text) = signal(String::new());
+    let server_url: String = use_context().unwrap();
 
     view! {
         <UploadFile set_file=set_file_callback />
+        <input type="text" on:input:target=move |ev| set_alt_text.set(ev.target().value()) />
         <textarea
             prop:value=move || get_text.get()
             on:input:target=move |ev| set_text.set(ev.target().value())
         >{move || get_text.get_untracked()}</textarea>
         <button on:click=move |_| {
+            let server_url = server_url.clone();
             spawn_local(async move {
                 let category = get_category.get_untracked();
                 let category = urlencoding::decode(category.as_str()).unwrap();
                 let board = get_board.get_untracked();
                 let board = urlencoding::decode(board.as_str()).unwrap();
-                let result: Option<CreatePostReplyResponse> = api::post_request_body("http://127.0.0.1:3000/post/reply", CreatePostReplyRequest::new(
+                let result: Option<CreatePostReplyResponse> = api::post_request_body(&format!("{server_url}/post/reply"), CreatePostReplyRequest::new(
                     board.to_string(),
                     category.to_string(),
                     get_file.get_untracked(),
+                    get_alt_text.get_untracked(),
                     get_text.get_untracked(),
                     parent,
                     None

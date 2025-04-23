@@ -18,6 +18,7 @@ use crate::pages::board::Board;
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+    provide_context(include_str!("server-url.txt").to_string());
 
     view! {
         <Html attr:lang="en" attr:dir="ltr" attr:data-theme="light" />

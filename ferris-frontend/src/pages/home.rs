@@ -8,11 +8,12 @@ use crate::components::base64_img::Base64Img;
 /// Default Home Page
 #[component]
 pub fn Home() -> impl IntoView {
+    let server_url: String = use_context().unwrap();
 
     let home_page: Resource<Option<RootGetResponse>> = Resource::new(
-        move || None,
-        move |_: Option<()>| async move {
-            api::get_request("http://localhost:3000/").await
+        move || server_url.clone(),
+        move |server_url| async move {
+            api::get_request(&format!("{server_url}/")).await
         }
     );
 
@@ -46,7 +47,7 @@ pub fn Home() -> impl IntoView {
                                 let category_url = urlencoding::encode(&category);
                                 let board_url = urlencoding::encode(&name);
 
-                                view! { <li><a href=format!("http://localhost:3001/{}/{}",category_url, board_url)>{name.clone()}</a></li>}
+                                view! { <li><a href=format!("/{}/{}",category_url, board_url)>{name.clone()}</a></li>}
                         })
                             .collect::<Vec<_>>()
                     }</ul></div></For>
