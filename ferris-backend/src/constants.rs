@@ -29,3 +29,6 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
         }
     }
 }
+
+/// How long an authtoken lasts in days until it is invalid
+pub static AUTH_TOKEN_LIFETIME: usize = 30;

@@ -10,7 +10,7 @@ anyhow = "1.0.98"
 argon2 = "0.5.3"
 async-trait = "0.1.88"
 base64 = "0.22.1"
-chrono = "0.4.40"
+chrono = {  version = "0.4.40", features = ["alloc"] }
 clap = { version = "4.5.37", features = ["derive"] }
 env_logger = "0.11.8"
 ferris_shared = { workspace = true }

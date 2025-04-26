@@ -1,8 +1,9 @@
 use std::path::PathBuf;
+use anyhow::Error;
 use async_trait::async_trait;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use sqlx::{Row, SqliteConnection, SqlitePool};
 use sqlx::sqlite::SqliteConnectOptions;
 use uuid::Uuid;
@@ -10,7 +11,8 @@ use crate::config::Config;
 use crate::constants;
 use ferris_shared::transfer::BoardInfo;
 use ferris_shared::transfer::post::Post;
-use crate::database::DatabaseDriver;
+use crate::constants::AUTH_TOKEN_LIFETIME;
+use crate::database::{DatabaseDriver, DatabaseError};
 
 fn create_sqlite_database_location() -> anyhow::Result<PathBuf> {
     let mut path = PathBuf::new();
@@ -77,6 +79,16 @@ impl DatabaseDriver for SqliteDB {
     async fn register_user(&self, username: &str, email: &str, password: &str) -> anyhow::Result<String> {
         let mut connection = self.pool.begin().await?;
 
+        let result = sqlx::query("SELECT 1 FROM User WHERE username=$1")
+            .bind(username)
+            .fetch_optional(&mut *connection)
+            .await?;
+
+        if let Some(_) = result {
+            return Err(Error::from(DatabaseError::UserAlreadyExists))
+        }
+
+
         let password = constants::hash_password(password);
 
         sqlx::query("INSERT INTO User (username, password, email) VALUES ($1, $2, $3)")
@@ -119,11 +131,15 @@ impl DatabaseDriver for SqliteDB {
 
         let password = constants::hash_password(password);
 
-        let id = sqlx::query("SELECT id, is_admin FROM User WHERE email = $1 AND password = $2")
+        let id = sqlx::query("SELECT id FROM User WHERE email = $1 AND password = $2")
             .bind(email)
             .bind(&password)
-            .fetch_one(&mut *connection)
+            .fetch_optional(&mut *connection)
             .await?;
+
+        let Some(id) = id else {
+            return Err(Error::from(DatabaseError::UserOrPasswordDoesNotMatch))
+        };
 
         let id = id.get::<i64, &str>("id");
 
@@ -259,13 +275,28 @@ impl DatabaseDriver for SqliteDB {
 
         let user_id: i64 = match auth_token {
             Some(token) => {
-                let result = sqlx::query("SELECT user_id FROM AuthToken WHERE token = $1")
+                let result = sqlx::query("SELECT user_id, timestamp FROM AuthToken WHERE token = $1")
                     .bind(token.as_str())
                     .fetch_optional(&mut *connection)
                     .await?;
-                result.map(|x| x.try_get("user_id").ok())
-                    .flatten()
-                    .unwrap_or(1)
+
+                if let Some(result) = result {
+                    let timestamp = result.get("timestamp");
+                    let user_id = result.get("user_id");
+                    match check_auth_token(timestamp) {
+                        Err(DatabaseError::AuthTokenExpired) => {
+                            invalidate_auth_token(&mut *connection, &token).await?;
+                            connection.commit().await?;
+
+                            return Err(Error::from(DatabaseError::AuthTokenExpired))
+                        }
+                        _ => {
+                            user_id
+                        }
+                    }
+                } else {
+                    1
+                }
             }
             None => 1, // use Anonymous user id
         };
@@ -330,13 +361,29 @@ impl DatabaseDriver for SqliteDB {
 
         let user_id: i64 = match auth_token {
             Some(token) => {
-                let result = sqlx::query("SELECT user_id FROM AuthToken WHERE token = $1")
+
+                let result = sqlx::query("SELECT user_id, timestamp FROM AuthToken WHERE token = $1")
                     .bind(token.as_str())
                     .fetch_optional(&mut *connection)
                     .await?;
-                result.map(|x| x.try_get("user_id").ok())
-                    .flatten()
-                    .unwrap_or(1)
+
+                if let Some(result) = result {
+                    let timestamp = result.get("timestamp");
+                    let user_id = result.get("user_id");
+                    match check_auth_token(timestamp) {
+                        Err(DatabaseError::AuthTokenExpired) => {
+                            invalidate_auth_token(&mut *connection, &token).await?;
+                            connection.commit().await?;
+
+                            return Err(Error::from(DatabaseError::AuthTokenExpired))
+                        }
+                        _ => {
+                            user_id
+                        }
+                    }
+                } else {
+                    1
+                }
             }
             None => 1, // use Anonymous user id
         };
@@ -412,6 +459,30 @@ async fn add_board<'a>(connection: &mut SqliteConnection, board: &BoardInfo) -> 
             .execute(&mut *connection)
             .await?;
     }
+
+    Ok(())
+}
+
+
+fn check_auth_token(token_timestamp: i64) -> anyhow::Result<(), DatabaseError> {
+    let timestamp = Utc::now();
+
+    let token_timestamp = DateTime::<Utc>::from_timestamp(token_timestamp, 0).unwrap();
+
+    let delta = token_timestamp.signed_duration_since(timestamp);
+    if delta.num_days() as usize > AUTH_TOKEN_LIFETIME {
+        Err(DatabaseError::AuthTokenExpired)
+    } else {
+        Ok(())
+    }
+}
+
+async fn invalidate_auth_token(connection: &mut SqliteConnection, token: &str) -> anyhow::Result<()> {
+
+    sqlx::query("DELETE FROM AuthToken WHERE token = $1")
+        .bind(token)
+        .execute(connection)
+        .await?;
 
     Ok(())
 }

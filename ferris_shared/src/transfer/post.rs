@@ -109,13 +109,23 @@ impl CreatePostRequest {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct CreatePostResponse {
-    pub post: Post,
+#[serde(untagged)]
+pub enum CreatePostResponse {
+    Success {
+        post: Post,
+    },
+    Error {
+        message: String,
+    }
 }
 
 impl CreatePostResponse {
     pub fn new(post: Post) -> Self {
-        Self { post }
+        Self::Success { post }
+    }
+
+    pub fn error<M: AsRef<str>>(message: M) -> Self {
+        Self::Error { message: message.as_ref().to_string() }
     }
 }
 
@@ -147,8 +157,14 @@ impl CreatePostReplyRequest {
 
 
 #[derive(Deserialize, Serialize)]
-pub struct CreatePostReplyResponse {
-    pub post: Post,
+#[serde(untagged)]
+pub enum CreatePostReplyResponse {
+    Success {
+        post: Post,
+    },
+    Error {
+        message: String,
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Eq, Hash, Debug)]

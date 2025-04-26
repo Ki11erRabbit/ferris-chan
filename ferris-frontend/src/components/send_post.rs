@@ -2,7 +2,7 @@ use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use leptos::{component, view, IntoView};
 use leptos::either::Either;
-use leptos::logging::log;
+use leptos::logging::{error, log};
 use leptos::prelude::{signal, Callable, Callback, Get, GetUntracked, OnAttribute, PropAttribute, ReadSignal, Set, ElementChild, OnTargetAttribute, use_context, Read, WriteSignal, ClassAttribute};
 use leptos::task::spawn_local;
 use leptos::web_sys::{HtmlInputElement};
@@ -123,8 +123,14 @@ pub fn SendPost(
                 ))
                 .await;
 
-                if let Some(result) = result {
-                    set_post.run((result.post,));
+                match result {
+                    Some(CreatePostResponse::Success { post }) => {
+                        set_post.run((post,));
+                    }
+                    Some(CreatePostResponse::Error { message }) => {
+                        error!("{}", message);
+                    }
+                    None => {}
                 }
             })
         }>
@@ -175,8 +181,14 @@ pub fn SendPostReply(
                 ))
                 .await;
 
-                if let Some(result) = result {
-                    set_post.run((result.post,));
+                match result {
+                    Some(CreatePostReplyResponse::Success { post }) => {
+                        set_post.run((post,));
+                    }
+                    Some(CreatePostReplyResponse::Error { message }) => {
+                        error!("{}", message);
+                    }
+                    None => {}
                 }
             })
         }>

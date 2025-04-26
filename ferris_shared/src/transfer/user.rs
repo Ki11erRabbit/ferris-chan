@@ -35,14 +35,24 @@ impl LoginRequest {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct LoginResponse {
-    pub token: String,
-    pub is_admin: bool,
+#[serde(untagged)]
+pub enum LoginResponse {
+    Success {
+        token: String,
+        is_admin: bool,
+    },
+    Error {
+        message: String,
+    }
 }
 
 impl LoginResponse {
     pub fn new(token: String, is_admin: bool) -> LoginResponse {
-        LoginResponse { token, is_admin }
+        LoginResponse::Success { token, is_admin }
+    }
+
+    pub fn error<M: AsRef<str>>(message: M) -> Self {
+        LoginResponse::Error { message: message.as_ref().to_string() }
     }
 }
 

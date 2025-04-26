@@ -1,5 +1,6 @@
 pub mod sqlite;
-
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
 use async_trait::async_trait;
 use ferris_shared::transfer::post::Post;
@@ -48,3 +49,29 @@ impl DbFactory {
         Ok(driver)
     }
 }
+
+#[derive(Debug)]
+pub enum DatabaseError {
+    AuthTokenExpired,
+    UserAlreadyExists,
+    UserOrPasswordDoesNotMatch,
+}
+
+
+impl Display for DatabaseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DatabaseError::AuthTokenExpired => {
+                write!(f, "Auth token expired")
+            }
+            DatabaseError::UserAlreadyExists => {
+                write!(f, "User already exists")
+            }
+            DatabaseError::UserOrPasswordDoesNotMatch => {
+                write!(f, "User or password doesn't match")
+            }
+        }
+    }
+}
+
+impl Error for DatabaseError {}

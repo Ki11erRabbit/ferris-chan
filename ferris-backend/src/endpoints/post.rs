@@ -4,6 +4,7 @@ use actix_web::http::StatusCode;
 use web::Json;
 use crate::AppState;
 use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, GetPostReplyRequest, GetPostReplyResponse, GetPostsRequest, GetPostsResponse};
+use crate::database::DatabaseError;
 
 #[get("/post/{category}/{board}/{count}/{offset}")]
 async fn get_posts(path: web::Path<(String, String, i64, i64)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
@@ -62,14 +63,25 @@ async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) ->
     }
 
     let result = data.get_ref().db.create_post(&board, &category, &image, &alt_text, &text, auth_token)
-        .await
-    .expect("unable to create post");
+        .await;
 
-    log::info!("Create post : {:?}", &result);
+    match result {
+        Ok(post) => {
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type(ContentType::json())
+                .json(CreatePostResponse::new(post)))
+        }
+        Err(e) => {
+            if let Ok(DatabaseError::AuthTokenExpired) = e.downcast() {
+                Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
+                    .json(CreatePostResponse::error("Token expired")))
+            } else {
+                Ok(HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
+                .json(CreatePostResponse::error("Internal server error")))
+            }
+        }
+    }
 
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type(ContentType::json())
-        .json(CreatePostResponse::new(result)))
 }
 
 #[post("/post/reply")]
@@ -81,10 +93,24 @@ async fn create_post_reply(req: Json<CreatePostReplyRequest>, data: web::Data<Ap
     }
 
     let result = data.get_ref().db.create_post_reply(&board, &category, &image, &alt_text, &text, parent, auth_token)
-        .await
-        .expect("unable to create post");
+        .await;
 
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type(ContentType::json())
-        .json(CreatePostResponse::new(result)))
+    match result {
+        Ok(post) => {
+            Ok(HttpResponse::build(StatusCode::OK)
+                .content_type(ContentType::json())
+                .json(CreatePostResponse::new(post)))
+        }
+        Err(e) => {
+            if let Ok(DatabaseError::AuthTokenExpired) = e.downcast() {
+                Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
+                    .json(CreatePostResponse::error("Token is expired")))
+            } else {
+                Ok(HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
+                    .json(CreatePostResponse::error("Internal server error")))
+            }
+        }
+    }
+
+
 }

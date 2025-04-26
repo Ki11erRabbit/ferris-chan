@@ -3,6 +3,7 @@ use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use crate::AppState;
 use ferris_shared::transfer::user::{LoginRequest, LoginResponse, LogoutRequest, RegisterRequest};
+use crate::database::DatabaseError;
 
 #[post("/auth")]
 async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
@@ -14,7 +15,12 @@ async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
     let (auth_token, is_admin) = match data.get_ref().db.login_user(&email, &password).await {
         Ok(auth_token) => auth_token,
         Err(e) => {
-            eprintln!("login_user error: {}", e);
+
+            if let Ok(DatabaseError::UserOrPasswordDoesNotMatch) = e.downcast() {
+                return Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
+                    .json(LoginResponse::error("Email or password does not match")));
+            }
+
             return Ok(HttpResponse::build(StatusCode::BAD_REQUEST).finish())
         }
     };
@@ -52,7 +58,13 @@ async fn register_user(req: web::Json<RegisterRequest>, data: web::Data<AppState
     let auth_token = match data.get_ref().db.register_user(&username, &email, &password).await {
         Ok(auth_token) => auth_token,
         Err(e) => {
-            eprintln!("login_user error: {}", e);
+
+            if let Ok(DatabaseError::UserAlreadyExists) = e.downcast::<DatabaseError>(){
+                return Ok(HttpResponse::build(StatusCode::CONFLICT)
+                    .json(LoginResponse::error("User already exists")));
+            }
+
+
             return Ok(HttpResponse::build(StatusCode::BAD_REQUEST).finish())
         }
     };

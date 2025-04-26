@@ -21,11 +21,18 @@ pub fn Login() -> impl IntoView {
             spawn_local(async move {
                 let result: Option<LoginResponse> = api::post_request_body(&format!("{server_url}/auth"), LoginRequest::new(get_email.get_untracked(), get_password.get_untracked())).await;
 
-                if let Some(LoginResponse { token, is_admin }) = result {
-                    let window = web_sys::window().unwrap();
-                    let document = window.document().unwrap();
-                    let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
-                    html_document.set_cookie(&format!("token={token}; is_admin={is_admin}")).unwrap();
+                match result {
+                    Some(LoginResponse::Success { token, is_admin }) => {
+                        let window = web_sys::window().unwrap();
+                        let document = window.document().unwrap();
+                        let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
+                        html_document.set_cookie(&format!("token={token}; is_admin={is_admin}")).unwrap();
+                    }
+                    Some(LoginResponse::Error { message }) => {
+                        let window = web_sys::window().unwrap();
+                        window.alert_with_message(message.as_str()).unwrap();
+                    }
+                    None => {}
                 }
             });
         }>"Login"</button>
