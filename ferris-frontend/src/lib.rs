@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+use leptos::either::EitherOf14::N;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::{components::*, path};
+use wasm_bindgen::JsCast;
 
 // Modules
 mod components;
@@ -40,5 +43,26 @@ pub fn App() -> impl IntoView {
                 <Route path=path!("/register") view=Register />
             </Routes>
         </Router>
+    }
+}
+
+pub fn get_cookie_data() -> Option<HashMap<String, String>> {
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
+    let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
+    let cookie_data = html_document.cookie().unwrap();
+    let split = cookie_data.split("; ");
+
+    let mut output = HashMap::new();
+
+    for item in split {
+        let pair = item.split("=").collect::<Vec<&str>>();
+        output.insert(pair[0].to_string(), pair[1].to_string());
+    }
+
+    if output.is_empty() {
+        None
+    } else {
+        Some(output)
     }
 }

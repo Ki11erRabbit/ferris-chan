@@ -10,7 +10,7 @@ use leptos::web_sys::Blob;
 use leptos::wasm_bindgen::JsCast;
 use web_sys::js_sys::{ArrayBuffer, Uint8Array};
 use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, Post};
-use crate::api;
+use crate::{api, get_cookie_data};
 use crate::components::base64_img::Base64Img;
 
 async fn to_base64(data: Blob) -> String {
@@ -113,13 +113,19 @@ pub fn SendPost(
         <button on:click=move |_| {
             let server_url = server_url.clone();
             spawn_local(async move {
+                let token:Option<String> = get_cookie_data().into_iter()
+                .flat_map(|map| {
+                    map.get("token").cloned()
+                })
+                .next();
+
                 let result: Option<CreatePostResponse> = api::post_request_body(&format!("{server_url}/post"), CreatePostRequest::new(
                     get_board.get_untracked(),
                     get_category.get_untracked(),
                     get_file.get_untracked(),
                     get_alt_text.get_untracked(),
                     get_text.get_untracked(),
-                    None
+                    token
                 ))
                 .await;
 
@@ -166,6 +172,12 @@ pub fn SendPostReply(
         <button on:click=move |_| {
             let server_url = server_url.clone();
             spawn_local(async move {
+                let token:Option<String> = get_cookie_data().into_iter()
+                .flat_map(|map| {
+                    map.get("token").cloned()
+                })
+                .next();
+
                 let category = get_category.get_untracked();
                 let category = urlencoding::decode(category.as_str()).unwrap();
                 let board = get_board.get_untracked();
@@ -177,7 +189,7 @@ pub fn SendPostReply(
                     get_alt_text.get_untracked(),
                     get_text.get_untracked(),
                     parent,
-                    None
+                    token
                 ))
                 .await;
 

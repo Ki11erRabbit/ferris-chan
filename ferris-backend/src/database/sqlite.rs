@@ -79,8 +79,9 @@ impl DatabaseDriver for SqliteDB {
     async fn register_user(&self, username: &str, email: &str, password: &str) -> anyhow::Result<String> {
         let mut connection = self.pool.begin().await?;
 
-        let result = sqlx::query("SELECT 1 FROM User WHERE username=$1")
+        let result = sqlx::query("SELECT 1 FROM User WHERE username=$1 OR email=$2")
             .bind(username)
+            .bind(email)
             .fetch_optional(&mut *connection)
             .await?;
 
