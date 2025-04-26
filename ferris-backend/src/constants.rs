@@ -12,7 +12,7 @@ pub fn hash_password(password: &str) -> String {
 
     let password_hash = argon2.hash_password(password, &salt).expect("hash_error");
 
-    password_hash.to_string()
+    password_hash.hash.unwrap().to_string()
 }
 
 pub fn verify_password(password: &str, hash: &str) -> bool {

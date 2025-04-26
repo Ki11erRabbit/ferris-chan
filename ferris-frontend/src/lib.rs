@@ -13,6 +13,7 @@ use crate::pages::home::Home;
 
 use crate::pages::board::Board;
 use crate::pages::login::Login;
+use crate::pages::register::Register;
 
 /// An app router which renders the homepage and handles 404's
 #[component]
@@ -36,6 +37,7 @@ pub fn App() -> impl IntoView {
                 <Route path=path!("/") view=Home />
                 <Route path=path!("/:category/:board") view=Board />
                 <Route path=path!("/login") view=Login />
+                <Route path=path!("/register") view=Register />
             </Routes>
         </Router>
     }

@@ -1,11 +1,10 @@
-use actix_web::{delete, put, web, HttpResponse};
+use actix_web::{delete, post, web, HttpResponse};
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
-use sqlx::{SqlitePool};
 use crate::AppState;
 use ferris_shared::transfer::user::{LoginRequest, LoginResponse, LogoutRequest, RegisterRequest};
 
-#[put("/auth")]
+#[post("/auth")]
 async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     let LoginRequest { email, password } = req.into_inner();
     if email.is_empty() || password.is_empty() {
@@ -39,7 +38,7 @@ async fn logout_user(req: web::Json<LogoutRequest>, data: web::Data<AppState>) -
     }
 }
 
-#[put("/auth/register")]
+#[post("/auth/register")]
 async fn register_user(req: web::Json<RegisterRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
     if data.get_ref().config.block_registrations {
         return Ok(HttpResponse::new(StatusCode::SERVICE_UNAVAILABLE))

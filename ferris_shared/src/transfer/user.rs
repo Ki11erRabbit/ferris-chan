@@ -8,6 +8,16 @@ pub struct RegisterRequest {
     pub password: String,
 }
 
+impl RegisterRequest {
+    pub fn new(username: String, email: String, password: String) -> Self {
+        Self {
+            username,
+            email,
+            password,
+        }
+    }
+}
+
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LoginRequest {
