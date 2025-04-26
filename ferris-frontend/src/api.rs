@@ -84,9 +84,8 @@ where
     })
 }
 
-pub fn put_request<R, T>(path: &str, request: Option<R>) -> impl std::future::Future<Output = Option<T>>
+pub fn put_request<T>(path: &str) -> impl std::future::Future<Output = Option<T>>
 where
-    R: DeserializeOwned + Into<JsValue> + Send,
     T: Serialize + DeserializeOwned {
     SendWrapper::new(async move {
         let abort_controller = SendWrapper::new(AbortController::new().ok());
@@ -98,21 +97,38 @@ where
             }
         });
 
-        let request_builder = gloo_net::http::Request::put(path)
-            .abort_signal(abort_signal.as_ref());
+        gloo_net::http::Request::put(path)
+            .abort_signal(abort_signal.as_ref())
+            .send()
+            .await
+            .map_err(|e| logging::error!("{e}"))
+            .ok()?
+            .json()
+            .await
+            .ok()
+    })
+}
+pub fn put_request_body<R, T>(path: &str, request: R) -> impl std::future::Future<Output = Option<T>>
+where
+    R: Serialize,
+    T: Serialize + DeserializeOwned {
+    SendWrapper::new(async move {
+        let abort_controller = SendWrapper::new(AbortController::new().ok());
+        let abort_signal = abort_controller.as_ref().map(|a| a.signal());
 
-        let request = if let Some(request) = request {
-            request_builder.body(request)
-                .map_err(|e| logging::error!("{e}"))
-                .ok()?
-                .send()
-                .await
-        } else {
-            request_builder
-                .send()
-                .await
-        };
-        request
+        on_cleanup(move || {
+            if let Some(abort_controller) = abort_controller.take() {
+                abort_controller.abort();
+            }
+        });
+
+        gloo_net::http::Request::put(path)
+            .abort_signal(abort_signal.as_ref())
+            .json(&request)
+            .map_err(|e| logging::error!("{e}"))
+            .ok()?
+            .send()
+            .await
             .map_err(|e| logging::error!("{e}"))
             .ok()?
             .json()

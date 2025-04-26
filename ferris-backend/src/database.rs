@@ -12,7 +12,7 @@ pub trait DatabaseDriver: Send + Sync {
 
     async fn register_user(&self, username: &str, email: &str, password: &str) -> anyhow::Result<String>;
 
-    async fn login_user(&self, email: &str, password: &str) -> anyhow::Result<String>;
+    async fn login_user(&self, email: &str, password: &str) -> anyhow::Result<(String, bool)>;
 
     async fn logout_user(&self, token: &str) -> anyhow::Result<()>;
 

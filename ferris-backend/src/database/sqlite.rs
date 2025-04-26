@@ -114,18 +114,26 @@ impl DatabaseDriver for SqliteDB {
     }
 
 
-    async fn login_user(&self, email: &str, password: &str) -> anyhow::Result<String> {
+    async fn login_user(&self, email: &str, password: &str) -> anyhow::Result<(String, bool)> {
         let mut connection = self.pool.begin().await?;
 
         let password = constants::hash_password(password);
 
-        let id = sqlx::query("SELECT id FROM User WHERE email = $1 AND password = $2")
+        let id = sqlx::query("SELECT id, is_admin FROM User WHERE email = $1 AND password = $2")
             .bind(email)
             .bind(&password)
             .fetch_one(&mut *connection)
             .await?;
 
         let id = id.get::<i64, &str>("id");
+
+
+        let is_admin = sqlx::query("SELECT id FROM Admin WHERE user_id=$1 LIMIT 1")
+            .bind(id)
+            .fetch_optional(&mut *connection)
+            .await?;
+
+        let is_admin = if is_admin.is_some() { true } else { false };
 
         let token = Uuid::new_v4();
         let token = token.to_string();
@@ -140,9 +148,10 @@ impl DatabaseDriver for SqliteDB {
             .execute(&mut *connection)
             .await?;
 
+
         connection.commit().await?;
 
-        Ok(token)
+        Ok((token, is_admin))
     }
 
     async fn logout_user(&self, token: &str) -> anyhow::Result<()> {

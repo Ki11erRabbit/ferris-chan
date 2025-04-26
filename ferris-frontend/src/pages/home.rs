@@ -1,5 +1,4 @@
 use leptos::either::Either;
-use leptos::logging::log;
 use leptos::prelude::*;
 use ferris_shared::transfer::{RootGetResponse, BoardInfo};
 use crate::api;

@@ -15,14 +15,24 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+impl LoginRequest {
+    pub fn new(email: String, password: String) -> Self {
+        Self {
+            email,
+            password,
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct LoginResponse {
     pub token: String,
+    pub is_admin: bool,
 }
 
 impl LoginResponse {
-    pub fn new(token: String) -> LoginResponse {
-        LoginResponse { token }
+    pub fn new(token: String, is_admin: bool) -> LoginResponse {
+        LoginResponse { token, is_admin }
     }
 }
 

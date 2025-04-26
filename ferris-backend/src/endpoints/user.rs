@@ -12,7 +12,7 @@ async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
         return Ok(HttpResponse::new(StatusCode::UNAUTHORIZED));
     }
 
-    let auth_token = match data.get_ref().db.login_user(&email, &password).await {
+    let (auth_token, is_admin) = match data.get_ref().db.login_user(&email, &password).await {
         Ok(auth_token) => auth_token,
         Err(e) => {
             eprintln!("login_user error: {}", e);
@@ -22,7 +22,7 @@ async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
 
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type(ContentType::json())
-        .json(LoginResponse::new(auth_token))
+        .json(LoginResponse::new(auth_token, is_admin))
     )
 }
 
@@ -60,6 +60,6 @@ async fn register_user(req: web::Json<RegisterRequest>, data: web::Data<AppState
 
     Ok(HttpResponse::build(StatusCode::OK)
         .content_type(ContentType::json())
-        .json(LoginResponse::new(auth_token))
+        .json(LoginResponse::new(auth_token, false))
     )
 }
