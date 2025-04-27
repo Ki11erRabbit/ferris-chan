@@ -31,9 +31,9 @@ async fn login_user(req: web::Json<LoginRequest>, data: web::Data<AppState>) -> 
     )
 }
 
-#[delete("/auth")]
-async fn logout_user(req: web::Json<LogoutRequest>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
-    let LogoutRequest{ token } = req.into_inner();
+#[delete("/auth/{token}")]
+async fn logout_user(path: web::Path<(String)>, data: web::Data<AppState>) -> std::io::Result<HttpResponse> {
+    let (token) = path.into_inner();
 
     match data.get_ref().db.logout_user(&token).await {
         Ok(_) => Ok(HttpResponse::new(StatusCode::NO_CONTENT)),

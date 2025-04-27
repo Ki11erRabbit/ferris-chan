@@ -26,7 +26,10 @@ pub fn Login() -> impl IntoView {
                         let window = web_sys::window().unwrap();
                         let document = window.document().unwrap();
                         let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
-                        html_document.set_cookie(&format!("is_admin={is_admin}; token={token}")).unwrap();
+                        html_document.set_cookie(&format!("isAdmin={is_admin}")).unwrap();
+                        html_document.set_cookie(&format!("token={token}")).unwrap();
+                        let history = window.history().unwrap();
+                        history.back().unwrap();
                     }
                     Some(LoginResponse::Error { message }) => {
                         let window = web_sys::window().unwrap();

@@ -29,7 +29,11 @@ pub fn Register() -> impl IntoView {
                         let window = web_sys::window().unwrap();
                         let document = window.document().unwrap();
                         let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
-                        html_document.set_cookie(&format!("token={token}; is_admin={is_admin}")).unwrap();
+                        html_document.set_cookie(&format!("isAdmin={is_admin}")).unwrap();
+                        html_document.set_cookie(&format!("token={token}")).unwrap();
+                        let history = window.history().unwrap();
+                        history.back().unwrap();
+                        history.back().unwrap();
                     }
                     Some(LoginResponse::Error { message }) => {
                         let window = web_sys::window().unwrap();

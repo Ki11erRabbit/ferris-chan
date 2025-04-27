@@ -137,9 +137,8 @@ where
     })
 }
 
-pub fn delete_request<R, T>(path: &str, request: Option<R>) -> impl std::future::Future<Output = Option<T>>
+pub fn delete_request<T>(path: &str) -> impl std::future::Future<Output = Option<T>>
 where
-    R: DeserializeOwned + Into<JsValue> + Send,
     T: Serialize + DeserializeOwned {
     SendWrapper::new(async move {
         let abort_controller = SendWrapper::new(AbortController::new().ok());
@@ -151,21 +150,10 @@ where
             }
         });
 
-        let request_builder = gloo_net::http::Request::delete(path)
-            .abort_signal(abort_signal.as_ref());
-
-        let request = if let Some(request) = request {
-            request_builder.body(request)
-                .map_err(|e| logging::error!("{e}"))
-                .ok()?
-                .send()
-                .await
-        } else {
-            request_builder
-                .send()
-                .await
-        };
-        request
+        gloo_net::http::Request::delete(path)
+            .abort_signal(abort_signal.as_ref())
+            .send()
+            .await
             .map_err(|e| logging::error!("{e}"))
             .ok()?
             .json()

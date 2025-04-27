@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use leptos::either::EitherOf14::N;
+use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_router::{components::*, path};
@@ -57,6 +58,9 @@ pub fn get_cookie_data() -> Option<HashMap<String, String>> {
 
     for item in split {
         let pair = item.split("=").collect::<Vec<&str>>();
+        if pair.len() < 2 {
+            continue;
+        }
         output.insert(pair[0].to_string(), pair[1].to_string());
     }
 
@@ -65,4 +69,14 @@ pub fn get_cookie_data() -> Option<HashMap<String, String>> {
     } else {
         Some(output)
     }
+}
+
+pub fn clear_cookie_data() {
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
+    let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
+    let cookie = html_document.cookie().unwrap();
+    html_document.set_cookie(&format!("{};expires=Thu, 01 Jan 1970 00:00:00 GMT", cookie)).unwrap();
+    let cookie = html_document.cookie().unwrap();
+    html_document.set_cookie(&format!("{};expires=Thu, 01 Jan 1970 00:00:00 GMT", cookie)).unwrap();
 }
