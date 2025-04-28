@@ -1,4 +1,4 @@
-use actix_web::{get, post, put, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use web::Json;

@@ -2,7 +2,7 @@
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use wasm_bindgen::JsCast;
-use ferris_shared::transfer::user::{LoginRequest, LoginResponse, RegisterRequest};
+use ferris_shared::transfer::user::{ LoginResponse, RegisterRequest};
 use crate::api;
 
 #[component]
