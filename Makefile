@@ -10,20 +10,21 @@ ferris-frontend/dist:
 ferris-frontend: ferris-frontend/dist
 
 .PHONY : all
-all: ferris-frontend, ferris-backend
+all: ferris-frontend ferris-backend
 
 ferrischan.service:
 	echo "[Unit]\nDescription=Ferris-chan server service\nAfter=network.target\nStartLimitIntervalSec=0\n\n[Service]\nType=simple\nRestart=always\nRestartSec=1\nUser=www-data\nExecStart=/usr/bin/ferris-backend\n\n[Install]WantedBy=multi-user.target" > ferrischan.service
 
 
-systemd: ferrischan.service
+systemd: ferrischan.service ;
 
 install-shared:
 	sudo mkdir /var/ferris-chan
 
 
-install-systemd: systemd, all, frontend-destination.txt, install-shared
+install-systemd: systemd all frontend-destination.txt install-shared
 	sudo cp ferrischan.service /etc/systemd/system/
 	sudo cp target/release/ferris-backend /usr/bin/
 	sudo mkdir "/var/www/$(cat frontend-destination.txt)"
 	sudo cp ferris-frontend/dist/. "/var/www/$(cat frontend-destination.txt)"
+
