@@ -11,7 +11,7 @@ use crate::config::Config;
 use crate::constants;
 use ferris_shared::transfer::BoardInfo;
 use ferris_shared::transfer::post::Post;
-use crate::constants::AUTH_TOKEN_LIFETIME;
+use crate::constants::{get_base64_len, AUTH_TOKEN_LIFETIME};
 use crate::database::{DatabaseDriver, DatabaseError};
 
 fn create_sqlite_database_location() -> anyhow::Result<PathBuf> {
@@ -26,6 +26,7 @@ fn create_sqlite_database_location() -> anyhow::Result<PathBuf> {
 
 pub struct SqliteDB {
     pool: SqlitePool,
+    max_image_size: usize,
 }
 
 impl SqliteDB {
@@ -38,13 +39,19 @@ impl SqliteDB {
             .create_if_missing(true);
 
         let pool =  SqlitePool::connect_with(options).await?;
-        Ok(Self { pool })
+        Ok(Self { pool, max_image_size: 0 })
+    }
+
+    pub fn validate_image_size(&self, img_string: &str) -> Option<bool> {
+        get_base64_len(img_string).map(|len| len > self.max_image_size)
     }
 }
 
 #[async_trait]
 impl DatabaseDriver for SqliteDB {
-    async fn initialize_database(&self, config: &Config) -> anyhow::Result<()> {
+    async fn initialize_database(&mut self, config: &Config) -> anyhow::Result<()> {
+        self.max_image_size = config.server.max_image_size;
+
         let mut connection = self.pool.begin().await?;
 
         let statements = [
@@ -258,6 +265,13 @@ impl DatabaseDriver for SqliteDB {
     }
 
     async fn create_post(&self, board: &str, category: &str, image: &str, alt_text: &str, text: &str, auth_token: Option<String>) -> anyhow::Result<Post> {
+        let size = self.validate_image_size(image);
+        if let Some(false) = size {
+            return Err(Error::from(DatabaseError::ImageLargerThanPermitted))
+        } else if size.is_none() {
+            return Err(Error::from(DatabaseError::ImageIsInvalidBase64));
+        }
+
         let mut connection = self.pool.begin().await?;
 
         let board_id = sqlx::query("SELECT id FROM Board WHERE name = $1")
@@ -344,6 +358,14 @@ impl DatabaseDriver for SqliteDB {
     }
 
     async fn create_post_reply(&self, board: &str, category: &str, image: &str, alt_text: &str, text: &str, parent: i64, auth_token: Option<String>) -> anyhow::Result<Post> {
+        let size = self.validate_image_size(image);
+        if let Some(false) = size {
+            return Err(Error::from(DatabaseError::ImageLargerThanPermitted))
+        } else if size.is_none() {
+            return Err(Error::from(DatabaseError::ImageIsInvalidBase64));
+        }
+
+
         let mut connection = self.pool.begin().await?;
 
         let board_id = sqlx::query("SELECT id FROM Board WHERE name = $1")

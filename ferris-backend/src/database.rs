@@ -9,7 +9,7 @@ use crate::database::sqlite::SqliteDB;
 
 #[async_trait]
 pub trait DatabaseDriver: Send + Sync {
-    async fn initialize_database(&self, config: &Config) -> anyhow::Result<()>;
+    async fn initialize_database(&mut self, config: &Config) -> anyhow::Result<()>;
 
     async fn register_user(&self, username: &str, email: &str, password: &str) -> anyhow::Result<String>;
 
@@ -35,7 +35,7 @@ pub struct DbFactory;
 
 impl DbFactory {
     pub async fn initialize_database(config: &Config) -> anyhow::Result<Arc<dyn DatabaseDriver>> {
-        let driver = match config.db.r#type.as_str() {
+        let mut driver = match config.db.r#type.as_str() {
             "sqlite" => Self::create_sqlite_database().await?,
             _ => anyhow::bail!("Unsupported database type: {}", config.db.r#type),
         };
@@ -57,6 +57,8 @@ pub enum DatabaseError {
     AuthTokenExpired,
     UserAlreadyExists,
     UserOrPasswordDoesNotMatch,
+    ImageLargerThanPermitted,
+    ImageIsInvalidBase64
 }
 
 
@@ -71,6 +73,12 @@ impl Display for DatabaseError {
             }
             DatabaseError::UserOrPasswordDoesNotMatch => {
                 write!(f, "User or password doesn't match")
+            }
+            DatabaseError::ImageLargerThanPermitted => {
+                write!(f, "Image larger than permitted")
+            }
+            DatabaseError::ImageIsInvalidBase64 => {
+                write!(f, "Image is invalid")
             }
         }
     }

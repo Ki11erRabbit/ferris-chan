@@ -17,10 +17,11 @@ use crate::database::{DatabaseDriver, DbFactory};
 pub struct AppState {
     pub config: BoardConfig,
     pub db: Arc<dyn DatabaseDriver>,
+    pub max_image_size: usize
 }
 impl AppState {
-    pub fn new(config: BoardConfig, db: Arc<dyn DatabaseDriver>) -> Self {
-        Self { config, db }
+    pub fn new(config: BoardConfig, db: Arc<dyn DatabaseDriver>, max_image_size: usize) -> Self {
+        Self { config, db, max_image_size }
     }
 }
 
@@ -51,6 +52,7 @@ async fn main() -> anyhow::Result<()> {
     config.get_logo();
 
     let port = config.server.port;
+    let max_image_size = config.server.max_image_size;
 
     let db_driver = DbFactory::initialize_database(&config).await?;
 
@@ -66,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
         App::new()
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .app_data(Data::new(AppState::new(config.clone(), db_driver.clone())))
+            .app_data(Data::new(AppState::new(config.clone(), db_driver.clone(), max_image_size)))
             .service(endpoints::get_home)
             .service(endpoints::user::register_user)
             .service(endpoints::user::login_user)

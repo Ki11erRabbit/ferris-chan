@@ -17,6 +17,8 @@ pub struct Config {
 pub struct ServerConfig {
     pub port: u16,
     pub workers: usize,
+    #[serde(default = 1_000_000)]
+    pub max_image_size: usize,
 }
 
 #[derive(Deserialize, Clone)]

@@ -1,5 +1,7 @@
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::SaltString;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 
 pub fn hash_password(password: &str) -> String {
     let password = password.as_bytes();
@@ -28,6 +30,10 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
             false
         }
     }
+}
+
+pub fn get_base64_len(string: &str) -> Option<usize> {
+    BASE64_STANDARD.decode(string).ok().map(|decoded| decoded.len())
 }
 
 /// How long an authtoken lasts in days until it is invalid
