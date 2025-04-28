@@ -72,13 +72,13 @@ async fn create_post(req: Json<CreatePostRequest>, data: web::Data<AppState>) ->
                 .json(CreatePostResponse::new(post)))
         }
         Err(e) => {
-            if let Ok(DatabaseError::AuthTokenExpired) = e.downcast_ref() {
+            if let Some(DatabaseError::AuthTokenExpired) = e.downcast_ref() {
                 Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
                     .json(CreatePostResponse::error("Token expired")))
-            } else if let Ok(DatabaseError::ImageIsInvalidBase64) = e.downcast_ref() {
+            } else if let Some(DatabaseError::ImageIsInvalidBase64) = e.downcast_ref() {
                 Ok(HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
                     .json(CreatePostResponse::error("You sent an invalid base64 encoded image")))
-            } else if let Ok(DatabaseError::ImageLargerThanPermitted) = e.downcast_ref() {
+            } else if let Some(DatabaseError::ImageLargerThanPermitted) = e.downcast_ref() {
                 Ok(HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
                     .json(CreatePostResponse::error(format!("You sent an image that is larger than the permitted {} bytes", data.get_ref().max_image_size))))
             } else {
@@ -108,13 +108,13 @@ async fn create_post_reply(req: Json<CreatePostReplyRequest>, data: web::Data<Ap
                 .json(CreatePostResponse::new(post)))
         }
         Err(e) => {
-            if let Ok(DatabaseError::AuthTokenExpired) = e.downcast_ref() {
+            if let Some(DatabaseError::AuthTokenExpired) = e.downcast_ref() {
                 Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
                     .json(CreatePostResponse::error("Token expired")))
-            } else if let Ok(DatabaseError::ImageIsInvalidBase64) = e.downcast_ref() {
+            } else if let Some(DatabaseError::ImageIsInvalidBase64) = e.downcast_ref() {
                 Ok(HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
                     .json(CreatePostResponse::error("You sent an invalid base64 encoded image")))
-            } else if let Ok(DatabaseError::ImageLargerThanPermitted) = e.downcast_ref() {
+            } else if let Some(DatabaseError::ImageLargerThanPermitted) = e.downcast_ref() {
                 Ok(HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR)
                     .json(CreatePostResponse::error(format!("You sent an image that is larger than the permitted {} bytes", data.get_ref().max_image_size))))
             } else {

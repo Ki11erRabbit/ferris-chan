@@ -36,17 +36,17 @@ pub struct DbFactory;
 impl DbFactory {
     pub async fn initialize_database(config: &Config) -> anyhow::Result<Arc<dyn DatabaseDriver>> {
         let mut driver = match config.db.r#type.as_str() {
-            "sqlite" => Self::create_sqlite_database().await?,
+            "sqlite" => Self::create_sqlite_database(config).await?,
             _ => anyhow::bail!("Unsupported database type: {}", config.db.r#type),
         };
-
-        driver.initialize_database(config).await?;
 
         Ok(driver)
     }
 
-    async fn create_sqlite_database() -> anyhow::Result<Arc<dyn DatabaseDriver>> {
-        let driver = Arc::new(SqliteDB::new().await?);
+    async fn create_sqlite_database(config: &Config) -> anyhow::Result<Arc<dyn DatabaseDriver>> {
+        let mut driver = SqliteDB::new().await?;
+        driver.initialize_database(config).await?;
+        let driver = Arc::new(driver);
 
         Ok(driver)
     }
