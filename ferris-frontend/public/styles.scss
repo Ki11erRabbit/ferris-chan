@@ -214,3 +214,14 @@ h6 {
 .top-bar-button:hover {
   border: 0.4rem solid var(--post-border);
 }
+
+.login-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-page input {
+  margin: 0.5rem;
+}

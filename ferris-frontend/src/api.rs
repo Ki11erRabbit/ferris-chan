@@ -1,5 +1,6 @@
 use leptos::logging;
 use leptos::prelude::on_cleanup;
+use leptos::server_fn::request;
 use leptos::server_fn::serde::de::DeserializeOwned;
 use leptos::server_fn::serde::Serialize;
 use send_wrapper::SendWrapper;
@@ -137,7 +138,7 @@ where
     })
 }
 
-pub fn delete_request<T>(path: &str) -> impl std::future::Future<Output = Option<T>>
+pub fn delete_request<T>(path: &str, token: Option<String>) -> impl std::future::Future<Output = Option<T>>
 where
     T: Serialize + DeserializeOwned {
     SendWrapper::new(async move {
@@ -150,9 +151,14 @@ where
             }
         });
 
-        gloo_net::http::Request::delete(path)
-            .abort_signal(abort_signal.as_ref())
-            .send()
+        let request = gloo_net::http::Request::delete(path)
+            .abort_signal(abort_signal.as_ref());
+        let request = if let Some(token) = token {
+            request.header("Authorization", &format!("Bearer {}", token))
+        } else {
+            request
+        };
+        request.send()
             .await
             .map_err(|e| logging::error!("{e}"))
             .ok()?

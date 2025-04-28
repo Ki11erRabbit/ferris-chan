@@ -26,6 +26,8 @@ pub trait DatabaseDriver: Send + Sync {
     async fn create_post(&self, board: &str, category: &str, image: &str, alt_text: &str, text: &str, auth_token: Option<String>) -> anyhow::Result<Post>;
 
     async fn create_post_reply(&self, board: &str, category: &str, image: &str, alt_text: &str, text: &str, parent: i64, auth_token: Option<String>) -> anyhow::Result<Post>;
+
+    async fn delete_post(&self, post_id: i64, token: &str) -> anyhow::Result<()>;
 }
 
 

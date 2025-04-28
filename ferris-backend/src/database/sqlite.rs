@@ -432,6 +432,25 @@ impl DatabaseDriver for SqliteDB {
 
         todo!("change this to return a generic error")
     }
+
+    async fn delete_post(&self, post_id: i64, token: &str) -> anyhow::Result<()> {
+        let mut connection = self.pool.begin().await?;
+
+        let auth_check = sqlx::query("SELECT id FROM AuthToken WHERE token = $1")
+            .bind(token)
+            .fetch_optional(&mut *connection)
+            .await?;
+
+        if let Some(_) = auth_check {
+            _ = sqlx::query("DELETE FROM Post WHERE id = $1")
+                .bind(post_id)
+                .execute(&mut *connection)
+                .await?;
+        }
+
+        connection.commit().await?;
+        Ok(())
+    }
 }
 
 async fn add_board<'a>(connection: &mut SqliteConnection, board: &BoardInfo) -> anyhow::Result<()> {

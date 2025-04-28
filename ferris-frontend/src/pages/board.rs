@@ -40,6 +40,8 @@ pub fn Board() -> impl IntoView {
     let (get_category, set_category) = signal(String::new());
     set_category.set(params.read_untracked().get("category").unwrap().clone());
 
+    let remove_post_callback: Callback<(usize,)> = Callback::from(move |post_id: usize| { set_posts.set(get_posts.get_untracked().into_iter().filter(|post: &Post| post.post_number != post_id).collect::<Vec<_>>()); });
+
 
     let (get_file, set_file) = signal(String::new());
     let set_file_callback: Callback<(String,)> = Callback::from(move |file| {set_file.set(file)});
@@ -63,6 +65,7 @@ pub fn Board() -> impl IntoView {
                         get_page=get_page
                         set_page=set_page
                         set_posts=set_posts
+                        remove_post=remove_post_callback
                     />
                 })
             }})}

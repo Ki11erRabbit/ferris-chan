@@ -23,7 +23,7 @@ pub fn TopBar(
                             let server_url = app_state.server_url.clone();
                             let cookie_data = cookie_data.clone();
                             spawn_local(async move {
-                                _ = api::delete_request::<()>(&format!("{server_url}/auth/{}", cookie_data.get("token").unwrap())).await;
+                                _ = api::delete_request::<()>(&format!("{server_url}/auth/{}", cookie_data.get("token").unwrap()), None).await;
                                 clear_cookie_data();
                                 let window = web_sys::window().unwrap();
                                 let location = window.location();

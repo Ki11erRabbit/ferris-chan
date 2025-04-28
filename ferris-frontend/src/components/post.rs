@@ -1,6 +1,6 @@
 use chrono::{DateTime, Local, Utc};
 use leptos::{component, view, IntoView};
-use leptos::callback::Callback;
+use leptos::callback::{Callable, Callback};
 use leptos::context::use_context;
 use leptos::control_flow::For;
 use leptos::either::{Either, EitherOf3};
@@ -12,8 +12,9 @@ use web_sys::wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::Closure;
 use web_sys::Event;
 use web_sys::js_sys::Function;
+use ferris_shared::transfer::admin::AdminRemovePostResponse;
 use ferris_shared::transfer::post::{GetPostReplyResponse, GetPostsResponse, Post};
-use crate::{api, AppState};
+use crate::{api, get_cookie_data, AppState};
 use crate::components::base64_img::Base64ImgSize;
 use crate::components::send_post::SendPostReply;
 
@@ -29,8 +30,11 @@ pub fn PostCore(
     post_alt_text: String,
     #[prop(into)]
     set_post: Callback<(Post,)>,
+    remove_post: Callback<(usize,)>,
     parent: i64,
 ) -> impl IntoView {
+
+    let app_state: AppState = use_context().unwrap();
 
     let (get_reply, set_reply) = signal(false);
     view! {
@@ -45,6 +49,21 @@ pub fn PostCore(
                 "Reply"
             } }
             </button>
+        {if get_cookie_data().map(|map| map.get("isAdmin").cloned()).flatten().is_some() {
+            Either::Left(view! {
+                <button on:click=move |_| {
+                    let server_url = app_state.server_url.clone();
+                    spawn_local(async move {
+                        let result: Option<AdminRemovePostResponse> = api::delete_request(&format!("{}/admin/post/{}", server_url, post_number), get_cookie_data().map(|map| map.get("token").cloned()).flatten()).await;
+                        if let Some(AdminRemovePostResponse::Success { post_id }) = result {
+                            remove_post.run((post_id,));
+                        }
+                    })
+                }>"Delete"</button>
+            })
+        } else {
+            Either::Right(view! {})
+        }}
         </div>
         <div class="post-content">
         <div class="post-image">
@@ -91,6 +110,7 @@ pub fn PostReply(
     parent: i64,
     #[prop(into)]
     set_post: Callback<(Post,)>,
+    remove_post: Callback<(usize,)>,
 ) -> impl IntoView {
     view! {
         <div class="post" id=format!("{post_number}")>
@@ -105,6 +125,7 @@ pub fn PostReply(
                 set_post=set_post
                 parent=parent
                 post_alt_text=post_alt_text
+                remove_post=remove_post
             />
         </div>
     }
@@ -120,10 +141,13 @@ pub fn PostToplevel(
     post_text: String,
     post_image: String,
     post_alt_text: String,
+    remove_post: Callback<(usize,)>,
 ) -> impl IntoView {
     let (get_posts, set_posts) = signal(Vec::new());
     let set_post_callback: Callback<(Post,)> = Callback::from(move |post: Post| { set_posts.write().insert(0, post); });
     let app_state: AppState = use_context().unwrap();
+
+    let remove_post_callback: Callback<(usize,)> = Callback::from(move |post_id: usize| { set_posts.set(get_posts.get().into_iter().filter(|post: &Post| post.post_number != post_id).collect::<Vec<_>>()); });
 
     let reply_response: Resource<Option<()>> = Resource::new(
         move || (post_number, app_state.server_url.clone()),
@@ -141,13 +165,13 @@ pub fn PostToplevel(
 
         <div class="post-and-replies" id=format!("{post_number}")>
         <div class=(["post", "post-reply"], move || true)>
-        <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image get_category=get_category get_board=get_board set_post=set_post_callback parent=post_number as i64 post_alt_text=post_alt_text />
+        <PostCore username=username timestamp=timestamp post_number=post_number post_text=post_text post_image=post_image get_category=get_category get_board=get_board set_post=set_post_callback parent=post_number as i64 post_alt_text=post_alt_text remove_post=remove_post />
         </div>
         <Suspense fallback = || view! {}>
             {move || Suspend::new(async move { match reply_response.await {
                 None => Either::Left(()),
                 Some(_) => Either::Right(view! {
-                    <PostListReplies get_posts=get_posts get_category=get_category get_board=get_board set_post=set_post_callback parent=(post_number as i64)/>
+                    <PostListReplies get_posts=get_posts get_category=get_category get_board=get_board set_post=set_post_callback parent=post_number as i64 remove_post=remove_post_callback />
                 })
             }})}
         </Suspense>
@@ -164,6 +188,7 @@ pub fn PostList(
     get_category: ReadSignal<String>,
     get_posts: ReadSignal<Vec<Post>>,
     set_posts: WriteSignal<Vec<Post>>,
+    remove_post: Callback<(usize,)>,
 ) -> impl IntoView {
 
 
@@ -222,6 +247,7 @@ pub fn PostList(
                 get_category=get_category
                 get_board=get_board
                 post_alt_text=post.alt_text
+                remove_post=remove_post
             />
         </For>
     }
@@ -234,6 +260,7 @@ fn PostListReplies(
     get_posts: ReadSignal<Vec<Post>>,
     #[prop(into)]
     set_post: Callback<(Post,)>,
+    remove_post: Callback<(usize,)>,
     parent: i64,
 ) -> impl IntoView {
     view! {
@@ -255,6 +282,7 @@ fn PostListReplies(
                 set_post=set_post
                 parent=parent
                 post_alt_text=post.alt_text
+                remove_post=remove_post
             />
         </For>
     }

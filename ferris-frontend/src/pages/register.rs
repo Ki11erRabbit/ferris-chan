@@ -15,9 +15,10 @@ pub fn Register() -> impl IntoView {
 
     view! {
         <div class="login-page">
-        <input type="text" on:input:target=move |ev| set_username.set(ev.target().value()) />
-        <input type="text" on:input:target=move |ev| set_email.set(ev.target().value()) />
-        <input type="password" on:input:target=move |ev| set_password.set(ev.target().value()) />
+        <h1>"Register"</h1>
+        <input type="text" placeholder="username"  on:input:target=move |ev| set_username.set(ev.target().value()) />
+        <input type="text" placeholder="email"  on:input:target=move |ev| set_email.set(ev.target().value()) />
+        <input type="password" placeholder="password" on:input:target=move |ev| set_password.set(ev.target().value()) />
         <button on:click=move |_| {
             let server_url = app_state.server_url.clone();
             spawn_local(async move {
