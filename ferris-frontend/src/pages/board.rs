@@ -2,7 +2,7 @@ use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use ferris_shared::transfer::post::{GetPostsResponse, Post};
-use crate::api;
+use crate::{api, AppState};
 use crate::components::post::PostList;
 use crate::components::send_post::SendPost;
 use crate::components::topbar::TopBar;
@@ -15,8 +15,8 @@ pub fn Board() -> impl IntoView {
     let set_post_callback: Callback<(Post,)> = Callback::from(move |post: Post| { set_posts.write().insert(0, post); });
 
     let params = use_params_map();
-    let server_url: String = use_context().unwrap();
-    let server_url2 = server_url.clone();
+    let app_state: AppState = use_context().unwrap();
+    let server_url2 = app_state.server_url.clone();
 
     let board_response: Resource<Option<()>> = Resource::new(
         move || (params.read().get("category").unwrap().clone(), params.read().get("board").unwrap().clone(), server_url2.clone()),
@@ -46,7 +46,7 @@ pub fn Board() -> impl IntoView {
 
     let refresh_callback = Callback::from(move || {
         let navigate = leptos_router::hooks::use_navigate();
-        navigate(&format!("{}/{}/{}", server_url.clone(), get_category.get_untracked(), get_board.get_untracked()), Default::default());
+        navigate(&format!("{}/{}/{}", app_state.server_url.clone(), get_category.get_untracked(), get_board.get_untracked()), Default::default());
     });
 
     view! {

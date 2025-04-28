@@ -3,11 +3,11 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use wasm_bindgen::JsCast;
 use ferris_shared::transfer::user::{ LoginResponse, RegisterRequest};
-use crate::api;
+use crate::{api, AppState};
 
 #[component]
 pub fn Register() -> impl IntoView {
-    let server_url: String = use_context().unwrap();
+    let app_state: AppState = use_context().unwrap();
 
     let (get_username, set_username) = signal(String::new());
     let (get_email, set_email) = signal(String::new());
@@ -19,7 +19,7 @@ pub fn Register() -> impl IntoView {
         <input type="text" on:input:target=move |ev| set_email.set(ev.target().value()) />
         <input type="password" on:input:target=move |ev| set_password.set(ev.target().value()) />
         <button on:click=move |_| {
-            let server_url = server_url.clone();
+            let server_url = app_state.server_url.clone();
             spawn_local(async move {
 
                 let result: Option<LoginResponse> = api::post_request_body(&format!("{server_url}/auth/register"), RegisterRequest::new(get_username.get_untracked(), get_email.get_untracked(), get_password.get_untracked())).await;

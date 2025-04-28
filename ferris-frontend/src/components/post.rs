@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::Closure;
 use web_sys::Event;
 use web_sys::js_sys::Function;
 use ferris_shared::transfer::post::{GetPostReplyResponse, GetPostsResponse, Post};
-use crate::api;
+use crate::{api, AppState};
 use crate::components::base64_img::Base64ImgSize;
 use crate::components::send_post::SendPostReply;
 
@@ -123,10 +123,10 @@ pub fn PostToplevel(
 ) -> impl IntoView {
     let (get_posts, set_posts) = signal(Vec::new());
     let set_post_callback: Callback<(Post,)> = Callback::from(move |post: Post| { set_posts.write().insert(0, post); });
-    let server_url: String = use_context().unwrap();
+    let app_state: AppState = use_context().unwrap();
 
     let reply_response: Resource<Option<()>> = Resource::new(
-        move || (post_number, server_url.clone()),
+        move || (post_number, app_state.server_url.clone()),
         move |(post_number, server_url)| async move {
             let result = api::get_request(format!("{server_url}/post-reply/{post_number}/{}/{}", 10, 0).as_str()).await
                 .map(|GetPostReplyResponse { posts }| posts);

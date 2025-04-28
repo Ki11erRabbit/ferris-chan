@@ -17,12 +17,21 @@ use crate::pages::board::Board;
 use crate::pages::login::Login;
 use crate::pages::register::Register;
 
+#[derive(Clone)]
+pub struct AppState {
+    pub server_url: String,
+    pub server_logo: String,
+}
+
 /// An app router which renders the homepage and handles 404's
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
-    provide_context(include_str!("server-url.txt").to_string());
+    provide_context(AppState {
+        server_url: include_str!("server-url.txt").to_string(),
+        server_logo: String::new(),
+    });
 
     view! {
         <Html attr:lang="en" attr:dir="ltr" attr:data-theme="light" />

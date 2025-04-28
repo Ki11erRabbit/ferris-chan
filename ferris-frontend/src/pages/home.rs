@@ -1,16 +1,16 @@
 use leptos::either::Either;
 use leptos::prelude::*;
 use ferris_shared::transfer::{RootGetResponse, BoardInfo};
-use crate::api;
+use crate::{api, App, AppState};
 use crate::components::base64_img::Base64Img;
 
 /// Default Home Page
 #[component]
 pub fn Home() -> impl IntoView {
-    let server_url: String = use_context().unwrap();
+    let app_state: AppState = use_context().unwrap();
 
     let home_page: Resource<Option<RootGetResponse>> = Resource::new(
-        move || server_url.clone(),
+        move || app_state.server_url.clone(),
         move |server_url| async move {
             api::get_request(&format!("{server_url}/")).await
         }
@@ -22,9 +22,8 @@ pub fn Home() -> impl IntoView {
         <Suspense fallback=|| view! { "Loading..." }>
             {move || Suspend::new(async move { match home_page.await {
                 None => Either::Left(view! { <h1>"Source site not found"</h1> }),
-                Some(home_page) => Either::Right(view! {
-
-
+                Some(home_page) => {
+                    Either::Right(view! {
                     <div class="logo">
                     <Base64Img image=home_page.logo />
                     <h1>{home_page.title.clone()}</h1>
@@ -54,7 +53,7 @@ pub fn Home() -> impl IntoView {
                     </div>
 
                 })
-            }})}
+            }}})}
         </Suspense>
     }
 }

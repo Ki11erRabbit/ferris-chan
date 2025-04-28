@@ -10,7 +10,7 @@ use leptos::web_sys::Blob;
 use leptos::wasm_bindgen::JsCast;
 use web_sys::js_sys::{ArrayBuffer, Uint8Array};
 use ferris_shared::transfer::post::{CreatePostReplyRequest, CreatePostReplyResponse, CreatePostRequest, CreatePostResponse, Post};
-use crate::{api, get_cookie_data};
+use crate::{api, get_cookie_data, AppState};
 use crate::components::base64_img::Base64Img;
 
 async fn to_base64(data: Blob) -> String {
@@ -101,7 +101,7 @@ pub fn SendPost(
     let (get_text, set_text) = signal(String::new());
     let (get_alt_text, set_alt_text) = signal(String::new());
 
-    let server_url: String = use_context().unwrap();
+    let app_state: AppState = use_context().unwrap();
 
     view! {
         <div class="send-post">
@@ -111,7 +111,7 @@ pub fn SendPost(
             on:input:target=move |ev| set_text.set(ev.target().value())
         >{move || get_text.get_untracked()}</textarea>
         <button on:click=move |_| {
-            let server_url = server_url.clone();
+            let server_url = app_state.server_url.clone();
             spawn_local(async move {
                 let token:Option<String> = get_cookie_data().into_iter()
                 .flat_map(|map| {
@@ -160,7 +160,7 @@ pub fn SendPostReply(
 
     let (get_text, set_text) = signal(String::new());
     let (get_alt_text, set_alt_text) = signal(String::new());
-    let server_url: String = use_context().unwrap();
+    let app_state: AppState = use_context().unwrap();
 
     view! {
         <div class="send-post">
@@ -170,7 +170,7 @@ pub fn SendPostReply(
             on:input:target=move |ev| set_text.set(ev.target().value())
         >{move || get_text.get_untracked()}</textarea>
         <button on:click=move |_| {
-            let server_url = server_url.clone();
+            let server_url = app_state.server_url.clone();
             spawn_local(async move {
                 let token:Option<String> = get_cookie_data().into_iter()
                 .flat_map(|map| {
