@@ -13,7 +13,9 @@ ferris-frontend: ferris-frontend/dist
 all: ferris-frontend ferris-backend
 
 ferrischan.service:
-	echo "[Unit]\nDescription=Ferris-chan server service\nAfter=network.target\nStartLimitIntervalSec=0\n\n[Service]\nType=simple\nRestart=always\nRestartSec=1\nUser=www-data\nExecStart=/usr/bin/ferris-backend\n\n[Install]WantedBy=multi-user.target" > ferrischan.service
+	echo "[Unit]\nDescription=Ferris-chan server service\nAfter=network.target\nStartLimitIntervalSec=0\n\n[Service]\nType=simple\nRestart=always\nRestartSec=1\nUser=www-data\nExecStart=/usr/bin/ferris-backend\n\n[Install]\nWantedBy=multi-user.target" > ferrischan.service
+	chmod 0644 ferrischan.service
+	chown root:root ferrischan.service
 
 
 systemd: ferrischan.service ;
