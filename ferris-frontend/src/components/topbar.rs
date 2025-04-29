@@ -13,7 +13,7 @@ pub fn TopBar(
         <div class="top-bar">
         <a class="top-bar-button" href="/">"Home"</a>
 
-        <h1>{board_name.get_untracked()}</h1>
+        <h1 class="top-bar-header">{board_name.get_untracked()}</h1>
 
         {
             match get_cookie_data() {
