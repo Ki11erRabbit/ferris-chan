@@ -22,7 +22,7 @@ pub struct ServerConfig {
 }
 
 fn image_size_default() -> usize {
-    1_000_000
+    5_000_000
 }
 
 #[derive(Deserialize, Clone)]

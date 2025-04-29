@@ -8,7 +8,7 @@ use std::io::Read;
 use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
-use actix_web::web::Data;
+use actix_web::web::{Data, PayloadConfig};
 use clap::Parser;
 use crate::config::{BoardConfig, Config};
 use crate::database::{DatabaseDriver, DbFactory};
@@ -65,9 +65,12 @@ async fn main() -> anyhow::Result<()> {
             .allow_any_method()
             .send_wildcard();
 
+        let payload = PayloadConfig::new(max_image_size+ 1_000_000);
+
         App::new()
             .wrap(cors)
             .wrap(middleware::Logger::default())
+            .app_data(Data::new(payload))
             .app_data(Data::new(AppState::new(config.clone(), db_driver.clone(), max_image_size)))
             .service(endpoints::get_home)
             .service(endpoints::user::register_user)
