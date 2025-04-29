@@ -65,9 +65,9 @@ async fn main() -> anyhow::Result<()> {
             .allow_any_method()
             .send_wildcard();
 
-        let payload = PayloadConfig::new(max_image_size + 1_000_000);
+        let payload = PayloadConfig::new(max_image_size + 4_000_000);
         let json_config = JsonConfig::default()
-            .limit(max_image_size + 1_000_000);
+            .limit(max_image_size + 4_000_000);
 
         App::new()
             .wrap(cors)

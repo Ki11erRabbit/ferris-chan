@@ -43,7 +43,10 @@ impl SqliteDB {
     }
 
     pub fn validate_image_size(&self, img_string: &str) -> Option<bool> {
-        get_base64_len(img_string).map(|len| len > self.max_image_size)
+        get_base64_len(img_string).map(|len| {
+            log::info!("img_len = {}", len);
+            len <= self.max_image_size
+        })
     }
 }
 
