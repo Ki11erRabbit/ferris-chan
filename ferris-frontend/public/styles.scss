@@ -191,6 +191,12 @@ h6 {
   .post-image {
     float: none;
   }
+
+  .post-image img {
+    max-width: 50vw;
+    height: 100%;
+    padding: 1rem;
+  }
 }
 
 .post-upload {
